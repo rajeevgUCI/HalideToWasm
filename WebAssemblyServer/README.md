@@ -7,6 +7,7 @@ To build and run:
 4. npm start
 5. Open the index page in a browser
 6. Open the browser console to see the output
+
 More details below.
 
 ## Install libraries ##
@@ -17,9 +18,14 @@ Clone and build my forked libraries:
 * binaryen
 * wabt
 * wasm-stdlib-hack
+
 Instructions for cloning and building them are in the READMEs for each repository.
 
 ## Build the wasm modules ##
-`cd public/`
+```bash
+cd public/
+```
 Set the shell variables listed at the top of Makefile to point to the installed libraries (which were described above).
-`make`
+```bash
+make
+```
