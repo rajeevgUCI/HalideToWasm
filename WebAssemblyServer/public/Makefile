@@ -31,7 +31,7 @@ $(HALIDE_WEB_S): $(HALIDE_WEB_SRC)
 %.wasm: %.s
 	# Note that compiles to module that imports memory:
 	$(BINARYEN_LIB)/bin/s2wasm --import-memory $< > $(<:.s=.wast)
-	$(WABT_LIB)/build/wast2wasm $(<:.s=.wast) -o $@
+	$(WABT_LIB)/bin/wast2wasm $(<:.s=.wast) -o $@
 	# Note: alternatively, can run $(BINARYEN_LIB)/bin/s2wasm --emit-binary $< -o $@
 
 .PHONY: clean
