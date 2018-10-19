@@ -52,15 +52,15 @@ function main() {
                     let dataWidth = dataCreateWasm.instance.exports._Z9get_widthv();
                     let dataHeight = dataCreateWasm.instance.exports._Z10get_heightv();
 
+                    console.log('Data array:');
                     console.log(new Int32Array(globalMemory.buffer, dataPtr, dataWidth * dataHeight));
 
                     let halideBuf = halideBufferCreateWasm.instance.exports._Z13create_bufferPiii(dataPtr, dataWidth, dataHeight);
                     let halideBufSize = halideBufferCreateWasm.instance.exports._Z24get_halide_buffer_t_sizev();
                     let halideBufData = halideBufferCreateWasm.instance.exports._Z8get_dataP15halide_buffer_t(halideBuf);
+                    console.log('Halide buffer address:');
                     console.log(halideBuf);
-                    console.log(halideBufData);
-                    console.log(dataPtr);
-                    console.log(new Int32Array(globalMemory.buffer, halideBufData));
+                    console.log("halideBufData should point to same address as dataPtr: " + (halideBufData == dataPtr));
 
                     WebAssembly.instantiateStreaming(fetch('halide_imports.wasm'), {
                         env: {
@@ -92,7 +92,8 @@ function main() {
                             console.log(myFuncWasm.instance.exports);
 
                             let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBuf);
-                            console.log(myFuncRetStatus);
+                            console.log('myFunc return status: ' + myFuncRetStatus);
+                            console.log('data at dataPtr after running myFunc:');
                             console.log(new Int32Array(globalMemory.buffer, dataPtr, dataWidth * dataHeight));
                         });
                     });
