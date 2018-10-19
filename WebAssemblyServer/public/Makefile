@@ -5,7 +5,7 @@
 # export WABT_LIB=<path-to-wabt>
 # export WASM_STDLIB_HACK_LIB=<path-to-wasm-stdlib-hack>
 # export HL_TARGET=webassembly-32-os_unknown
-# export LD_LIBRARY_PATH=<path-to-Halide>/bin
+# export LD_LIBRARY_PATH=${HALIDE_LIB}/bin
 # Note: when pointing to a directory, do not include a trailing slash 
 
 HALIDE_WEB_SRC = myfunc_generator.cpp
