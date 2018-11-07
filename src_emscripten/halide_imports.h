@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <stddef.h>
+#include <cassert>
 
-#include "myassert.h"
+extern "C"
+{
 
 typedef enum halide_type_code_t
 // #if __cplusplus >= 201103L
@@ -164,8 +166,7 @@ typedef struct halide_buffer_t {
         // if (device_interface && device_interface->device_sync) {
         //     return device_interface->device_sync(ctx, this);
         // }
-        assert(!device_interface,
-                "halide_buffer_t::device_sync: has device_interface");
+        assert(!device_interface);
 
         return 0;
     }
@@ -176,7 +177,7 @@ typedef struct halide_buffer_t {
      * another representation for bounds query arguments. */
     bool is_bounds_query() const {
         // return host == NULL && device == 0;
-        assert(device == 0, "halide_buffer_t::is_bounds_query: device is not 0");
+        assert(device == 0);
         return host == NULL;
     }
 
@@ -284,3 +285,5 @@ int halide_error_failed_to_upgrade_buffer_t(void *user_context,
 
 int halide_upgrade_buffer_t(void *user_context, const char *name, const buffer_t *old_buf,
                             halide_buffer_t *new_buf);
+
+}

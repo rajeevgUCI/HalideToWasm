@@ -1,8 +1,10 @@
 #include <string.h> // for memset. In wasm, will be imported from memory.wasm .
-
-#include "wasmprint.h"
+#include <iostream>
 
 #include "halide_imports.h"
+
+extern "C"
+{
 
 int halide_downgrade_buffer_t_device_fields(void *user_context, const char *name,
                                              const halide_buffer_t *new_buf, buffer_t *old_buf) {
@@ -24,8 +26,8 @@ int halide_downgrade_buffer_t_device_fields(void *user_context, const char *name
     //     free((void *)old_buf->dev);
     //     old_buf->dev = 0;
     // }
-    assert(!new_buf->device, "halide_downgrade_buffer_t_device_fields: new_buf has device");
-    assert(!old_buf->dev, "halide_downgrade_buffer_t_device_fields: old_buf has dev");
+    assert(!new_buf->device);
+    assert(!old_buf->dev);
 
     return 0;
 }
@@ -33,7 +35,7 @@ int halide_downgrade_buffer_t_device_fields(void *user_context, const char *name
 int halide_error_failed_to_downgrade_buffer_t(void *user_context,
                                                  const char *name,
                                                  const char *reason) {
-    wasmprint("halide_error_failed_to_downgrade_buffer_t");
+    std::cout << "halide_error_failed_to_downgrade_buffer_t" << std::endl;
     return halide_error_code_failed_to_downgrade_buffer_t;
 }
 
@@ -58,49 +60,47 @@ int halide_error_bad_type(void *user_context, const char *func_name,
                            uint8_t code_given, uint8_t correct_code,
                            uint8_t bits_given, uint8_t correct_bits,
                            uint16_t lanes_given, uint16_t correct_lanes) {
-    wasmprint("hey error");
-    wasmprint("halide_error_bad_type");
-    wasmprint("halide_error_bad_type");
+    std::cout << "halide_error_bad_type" << std::endl;
     return halide_error_code_bad_type;
 }
 
 int halide_error_buffer_allocation_too_large(void *user_context, const char *buffer_name,
                                                 uint64_t allocation_size, uint64_t max_size) {
-    wasmprint("halide_error_code_buffer_allocation_too_large");
+    std::cout << "halide_error_code_buffer_allocation_too_large" << std::endl;
     return halide_error_code_buffer_allocation_too_large;
 }
 
 int halide_error_buffer_argument_is_null(void *user_context, const char *buffer_name) {
-    wasmprint("halide_error_code_buffer_argument_is_null");
+    std::cout << "halide_error_buffer_argument_is_null" << std::endl;
     return halide_error_code_buffer_argument_is_null;
 }
 
 
 int halide_error_buffer_extents_negative(void *user_context, const char *buffer_name, int dimension, int extent) {
-    wasmprint("halide_error_code_buffer_extents_negative");
+    std::cout << "halide_error_code_buffer_extents_negative" << std::endl;
     return halide_error_code_buffer_extents_negative;
 }
 
 int halide_error_buffer_extents_too_large(void *user_context, const char *buffer_name, int64_t actual_size, int64_t max_size) {
-    wasmprint("halide_error_code_buffer_extents_too_large");
+    std::cout << "halide_error_code_buffer_extents_too_large" << std::endl;
     return halide_error_code_buffer_extents_too_large;
 }
 
 int halide_error_constraint_violated(void *user_context, const char *var, int val,
                                           const char *constrained_var, int constrained_val) {
-    wasmprint("halide_error_code_constraint_violated");
+    std::cout << "halide_error_constraint_violated" << std::endl;
     return halide_error_code_constraint_violated;
 }
 
 int halide_error_host_is_null(void *user_context, const char *func) {
-    wasmprint("halide_error_code_host_is_null");
+    std::cout << "halide_error_code_host_is_null" << std::endl;
     return halide_error_code_host_is_null;
 }
 
 int halide_error_failed_to_upgrade_buffer_t(void *user_context,
                                                  const char *name,
                                                  const char *reason) {
-    wasmprint("halide_error_code_failed_to_upgrade_buffer_t");
+    std::cout << "halide_error_code_failed_to_upgrade_buffer_t" << std::endl;
     return halide_error_code_failed_to_upgrade_buffer_t;
 }
 
@@ -122,7 +122,7 @@ int halide_upgrade_buffer_t(void *user_context, const char *name,
     //     new_buf->device = 0;
     //     new_buf->device_interface = NULL;
     // }
-    assert(!old_buf->dev, "halide_upgrade_buffer_t: old_buf has dev");
+    assert(!old_buf->dev);
     new_buf->device = 0;
     new_buf->device_interface = NULL;
 
@@ -137,3 +137,4 @@ int halide_upgrade_buffer_t(void *user_context, const char *name,
     return 0;
 }
 
+}

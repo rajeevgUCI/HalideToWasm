@@ -5,6 +5,9 @@
 
 #include "halide_imports.h"
 
+extern "C"
+{
+
 void make_shape_storage(halide_buffer_t *buf) {
     // if (buf.dimensions <= D) {
     //     buf.dim = shape;
@@ -48,4 +51,6 @@ int get_halide_buffer_t_size()
 int32_t *get_data(halide_buffer_t *halide_buf)
 {
     return (int32_t *)(halide_buf->host);
+}
+
 }

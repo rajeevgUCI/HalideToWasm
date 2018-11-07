@@ -11,14 +11,9 @@
 HALIDE_WEB_SRC = myfunc_generator.cpp
 HALIDE_WEB_S = myfunc.s
 HALIDE_WEB_OBJ = $(HALIDE_WEB_S:.s=.wasm)
-WEB_CPP_SRCS = halide_buffer_create.cpp halide_imports.cpp myassert.cpp data_create.cpp
-WEB_CPP_OBJS = $(WEB_CPP_SRCS:.cpp=.wasm)
-MEMORY_WASM_OBJ = memory.wasm
 
-all: $(WEB_CPP_OBJS) $(HALIDE_WEB_OBJ) $(MEMORY_WASM_OBJ)
-
-$(MEMORY_WASM_OBJ):
-	cp $(WASM_STDLIB_HACK_LIB)/dist/memory.wasm $(MEMORY_WASM_OBJ)
+all: $(HALIDE_WEB_OBJ)
+	cp $(HALIDE_WEB_OBJ) ../public/bin/
 
 $(HALIDE_WEB_S): $(HALIDE_WEB_SRC)
 	g++ $(HALIDE_WEB_SRC) -I $(HALIDE_LIB)/include/ -L $(HALIDE_LIB)/bin/ -lHalide -lpthread -ldl -o $(HALIDE_WEB_SRC:.cpp=) -std=c++11
@@ -36,13 +31,9 @@ $(HALIDE_WEB_S): $(HALIDE_WEB_SRC)
 
 .PHONY: clean
 clean:
-	$(RM) $(WEB_CPP_SRCS:.cpp=.bc) 
-	$(RM) $(WEB_CPP_SRCS:.cpp=.s) 
-	$(RM) $(WEB_CPP_SRCS:.cpp=.wast) 
-	$(RM) $(WEB_CPP_OBJS)
 	$(RM) $(HALIDE_WEB_SRC:.cpp=)
 	$(RM) $(HALIDE_WEB_S)
 	$(RM) $(HALIDE_WEB_S:.s=.wast)
 	$(RM) $(HALIDE_WEB_S:.s=.h)
 	$(RM) $(HALIDE_WEB_OBJ)
-	$(RM) $(MEMORY_WASM_OBJ)
+	$(RM) ../public/bin/$(HALIDE_WEB_OBJ)

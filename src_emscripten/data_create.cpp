@@ -1,8 +1,13 @@
-#include <stdlib.h> // for malloc. Implementation will be provided in wasm.
-#include <string.h> // for memset. Implementation will be provided in wasm.
+#include <stdlib.h> // for malloc
+#include <string.h> // for memset
+
+#include "data_create.h"
 
 const int OUTPUT_WIDTH = 8;
 const int OUTPUT_HEIGHT = 4;
+
+extern "C"
+{
 
 int get_width()
 {
@@ -23,4 +28,6 @@ int32_t *data_create()
     data[2] = 18;
     data[OUTPUT_WIDTH * OUTPUT_HEIGHT - 1] = 24;
     return data;
+}
+
 }
