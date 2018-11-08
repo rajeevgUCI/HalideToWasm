@@ -17,7 +17,7 @@ all: $(HALIDE_WEB_OBJ)
 
 $(HALIDE_WEB_S): $(HALIDE_WEB_SRC)
 	g++ $(HALIDE_WEB_SRC) -I $(HALIDE_LIB)/include/ -L $(HALIDE_LIB)/bin/ -lHalide -lpthread -ldl -o $(HALIDE_WEB_SRC:.cpp=) -std=c++11
-	./$(HALIDE_WEB_SRC:.cpp=)
+	./$(HALIDE_WEB_SRC:.cpp=) "$(HALIDE_WEB_S)"
 
 %.s: %.cpp
 	$(LLVM_LIB)/build/bin/clang++ -emit-llvm --target=wasm32 -Ofast $< -c -o $(<:.cpp=.bc)
