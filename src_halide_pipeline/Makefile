@@ -34,6 +34,5 @@ clean:
 	$(RM) $(HALIDE_WEB_SRC:.cpp=)
 	$(RM) $(HALIDE_WEB_S)
 	$(RM) $(HALIDE_WEB_S:.s=.wast)
-	$(RM) $(HALIDE_WEB_S:.s=.h)
 	$(RM) $(HALIDE_WEB_OBJ)
 	$(RM) ../public/bin/$(HALIDE_WEB_OBJ)

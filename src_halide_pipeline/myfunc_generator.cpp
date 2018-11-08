@@ -17,7 +17,9 @@ int main(int argc, char **argv) {
     myfunc(x, y) = x + y;
 
     myfunc.compile_to_assembly("myfunc.s", {}, target);
-    myfunc.compile_to_header("myfunc.h", {});
+
+    // For reference, to view expected arguments and return type:
+    // myfunc.compile_to_header("myfunc.h", {});
 
     return 0;
 }
