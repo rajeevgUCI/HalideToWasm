@@ -23,10 +23,10 @@ $(HALIDE_WEB_WASM): $(HALIDE_WEB_SRC)
 	mkdir -p $(HALIDE_WEB_PUBLIC_BIN_DIR)
 	g++ $(HALIDE_WEB_SRC) -I $(HALIDE_LIB)/include/ -L $(HALIDE_LIB)/bin/ -lHalide -lpthread -ldl -o $(HALIDE_WEB_EXE) -std=c++11
 	$(HALIDE_WEB_EXE) "$(HALIDE_WEB_S)"
-	# Note that compiles to module that imports memory:
+	@ # Note that compiles to module that imports memory:
 	$(BINARYEN_LIB)/bin/s2wasm --import-memory $(HALIDE_WEB_S) > $(HALIDE_WEB_WAST)
 	$(WABT_LIB)/bin/wast2wasm $(HALIDE_WEB_WAST) -o $(HALIDE_WEB_WASM)
-	# Note: alternatively, can run $(BINARYEN_LIB)/bin/s2wasm --emit-binary $(HALIDE_WEB_S) -o $(HALIDE_WEB_WASM)
+	@ # Note: alternatively, can run $(BINARYEN_LIB)/bin/s2wasm --emit-binary $(HALIDE_WEB_S) -o $(HALIDE_WEB_WASM)
 
 .PHONY: clean
 clean:
