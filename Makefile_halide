@@ -8,9 +8,10 @@
 # export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HALIDE_LIB}/bin
 # Note: when pointing to a directory, do not include a trailing slash 
 
-HALIDE_WEB_BIN_DIR = ../bin_halide_pipeline
-HALIDE_WEB_PUBLIC_BIN_DIR = ../public/bin
-HALIDE_WEB_SRC = myfunc_generator.cpp
+HALIDE_WEB_BIN_DIR = bin_halide_pipeline
+HALIDE_WEB_PUBLIC_BIN_DIR = public/bin
+HALIDE_WEB_SRC_DIR = src_halide_pipeline
+HALIDE_WEB_SRC = $(HALIDE_WEB_SRC_DIR)/myfunc_generator.cpp
 HALIDE_WEB_EXE = $(HALIDE_WEB_BIN_DIR)/myfunc_generator
 HALIDE_WEB_S = $(HALIDE_WEB_BIN_DIR)/myfunc.s
 HALIDE_WEB_WAST = $(HALIDE_WEB_BIN_DIR)/myfunc.wast
