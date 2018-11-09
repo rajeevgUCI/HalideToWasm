@@ -6,10 +6,10 @@
 # export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${HALIDE_LIB}/bin
 # Note: when pointing to a directory, do not include a trailing slash 
 
-PUBLIC_BIN_DIR = public/bin
+PUBLIC_BIN_DIR = public/
 
 EMSCRIPTEN_SRC_DIR = src_emscripten
-EMSCRIPTEN_MAIN_HTML = $(PUBLIC_BIN_DIR)/main.html
+EMSCRIPTEN_MAIN_HTML = $(PUBLIC_BIN_DIR)/index.html
 
 HALIDE_PIPELINE_BIN_DIR = bin_halide_pipeline
 HALIDE_PIPELINE_SRC_DIR = src_halide_pipeline
