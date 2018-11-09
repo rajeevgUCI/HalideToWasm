@@ -13,12 +13,15 @@ To build and run:
 More details on some of those steps below.
 
 ## Set up dependencies ##
-Clone and build my forked libraries:
-* Halide
-* binaryen
-* wabt
+Install emscripten and activate the tools. See instructions [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
-Instructions for cloning and building them are in the READMEs for each repository.
+Clone and build [my fork of the Halide library](https://github.com/rajeevgUCI/Halide). Instructions for building it is in the README for that repository.
+
+Clone and build [binaryen](https://github.com/WebAssembly/binaryen). Note: the 1.37.38 release was used for this demo.
+
+Clone and build [wabt](https://github.com/WebAssembly/wabt). Note: the 1.0.0 release was used for this demo.
 
 ## Build the demo ##
-Set the shell variables listed at the top of Makefile to point to the installed libraries (which were described above). Then, run `make`.
+Set the shell variables listed at the top of Makefile to point to the dependencies (which were described above).
+
+Then, run `make`.
