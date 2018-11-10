@@ -1,6 +1,6 @@
 # This Makefile assumes that setup.sh has been run.
 
-PUBLIC_BIN_DIR = public/
+PUBLIC_BIN_DIR = public
 
 EMSCRIPTEN_SRC_DIR = src_emscripten
 EMSCRIPTEN_MAIN_HTML = $(PUBLIC_BIN_DIR)/index.html
