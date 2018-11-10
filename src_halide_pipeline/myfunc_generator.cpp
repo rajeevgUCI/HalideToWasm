@@ -21,6 +21,8 @@ int main(int argc, char **argv) {
 
     myfunc(x, y) = x + y;
 
+    std::cout << "first output type = " << myfunc.output_types()[0] << std::endl;
+
     myfunc.compile_to_assembly(argv[1], {}, target);
 
     // For reference, to view expected arguments and return type:
