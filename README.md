@@ -22,6 +22,10 @@ Clone and build [binaryen](https://github.com/WebAssembly/binaryen). Note: the 1
 Clone and build [wabt](https://github.com/WebAssembly/wabt). Note: the 1.0.0 release was used for this demo.
 
 ## Build the demo ##
-Set the shell variables listed at the top of Makefile to point to the dependencies (which were described above).
+Set the variables listed at the top of setup.sh to point to the dependencies (which were described above).
 
-Then, run `make`.
+Then, run:
+```bash
+source setup.sh
+make
+```
