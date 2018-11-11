@@ -43,6 +43,8 @@ mergeInto(LibraryManager.library, {
         .then(myFuncWasm => {
             let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBuf);
             Module.print(`myFunc return status: ${myFuncRetStatus}`);
+            Module.print('halideBuf data in wasm memory:');
+            Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
         });
     }
 });
