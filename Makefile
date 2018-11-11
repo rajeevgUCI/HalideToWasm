@@ -5,7 +5,7 @@ PUBLIC_BIN_DIR = public
 EMSCRIPTEN_SRC_DIR = src_emscripten
 EMSCRIPTEN_SRC = $(wildcard $(EMSCRIPTEN_SRC_DIR)/*.cpp)
 EMSCRIPTEN_MAIN_HTML = $(PUBLIC_BIN_DIR)/index.html
-EMSCRIPTEN_EXPORTED_FNS = '["_main", "_halide_downgrade_buffer_t", "_halide_downgrade_buffer_t_device_fields", "_halide_error_bad_type", "_halide_error_buffer_allocation_too_large", "_halide_error_buffer_argument_is_null", "_halide_error_buffer_extents_negative", "_halide_error_buffer_extents_too_large", "_halide_error_constraint_violated", "_halide_error_host_is_null", "_halide_upgrade_buffer_t", "_get_data"]'
+EMSCRIPTEN_EXPORTED_FNS = '["_main", "_custom_halide_downgrade_buffer_t", "_custom_halide_downgrade_buffer_t_device_fields", "_custom_halide_error_bad_type", "_custom_halide_error_buffer_allocation_too_large", "_custom_halide_error_buffer_argument_is_null", "_custom_halide_error_buffer_extents_negative", "_custom_halide_error_buffer_extents_too_large", "_custom_halide_error_constraint_violated", "_custom_halide_error_host_is_null", "_custom_halide_upgrade_buffer_t", "_get_data"]'
 EMSCRIPTEN_EXTRA_EXPORTED_RUNTIME_METHODS = '["cwrap"]'
 
 HALIDE_PIPELINE_BIN_DIR = bin_halide_pipeline
