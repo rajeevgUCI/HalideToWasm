@@ -26,4 +26,9 @@ int32_t *data_create()
     return data;
 }
 
+void dealloc_data(int32_t *data)
+{
+    delete[] data;
+}
+
 }

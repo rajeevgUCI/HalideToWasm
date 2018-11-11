@@ -18,6 +18,7 @@ mergeInto(LibraryManager.library, {
 		let get_data = Module.cwrap('get_data', 'number', ['number']);
 		let get_width = Module.cwrap('get_width', 'number', []);
 		let get_height = Module.cwrap('get_height', 'number', []);
+		let dealloc_data = Module.cwrap('dealloc_data', null, ['number']);
 
         Module.print(`halideBuf data address = 0x${get_data(halideBuf).toString(16)}`);
         let halideBufData_32Bit = get_data(halideBuf) / 4; // divide 8-bit address by 4 to get 32-bit address
@@ -46,6 +47,8 @@ mergeInto(LibraryManager.library, {
             Module.print(`myFunc return status: ${myFuncRetStatus}`);
             Module.print('halideBuf data in wasm memory:');
             Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
+            dealloc_data(get_data(halideBuf));
+            Module.print('Deallocated data')
         });
     }
 });
