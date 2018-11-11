@@ -1,3 +1,6 @@
+#ifndef HALIDE_IMPORTS_H
+#define HALIDE_IMPORTS_H
+
 #include <stdint.h>
 #include <stddef.h>
 #include <cassert>
@@ -287,3 +290,5 @@ int halide_upgrade_buffer_t(void *user_context, const char *name, const buffer_t
                             halide_buffer_t *new_buf);
 
 }
+
+#endif // HALIDE_IMPORTS_H
