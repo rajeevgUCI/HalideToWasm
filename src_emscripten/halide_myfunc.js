@@ -14,11 +14,16 @@ mergeInto(LibraryManager.library, {
         let custom_halide_upgrade_buffer_t = Module.cwrap('custom_halide_upgrade_buffer_t', 'number', ['number', 'number', 'number', 'number']);
 
 		let get_data = Module.cwrap('get_data', 'number', ['number']);
+		let get_width = Module.cwrap('get_width', 'number', []);
+		let get_height = Module.cwrap('get_height', 'number', []);
 
         Module.print(`memory = ${Module.wasmMemory}`);
         Module.print(`halideBuf data = ${get_data(halideBuf)}`);
         let halideBufData_32Bit = get_data(halideBuf) / 4; // divide 8-bit address by 4 to get 32-bit address
-        Module.print(`first two elements of halideBuf data in memory: ${new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + 2)}`);
+        let width = get_width();
+        let height = get_height();
+        Module.print('halideBuf data in wasm memory:');
+        Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
 
         WebAssembly.instantiateStreaming(fetch('myfunc.wasm'), {
             env: {
