@@ -1,5 +1,6 @@
 #include <string.h> // for memset. In wasm, will be imported from memory.wasm .
 #include <iostream>
+#include <cassert>
 
 #include "halide_imports.h"
 
@@ -8,28 +9,10 @@ extern "C"
 
 int halide_downgrade_buffer_t_device_fields(void *user_context, const char *name,
                                              const halide_buffer_t *new_buf, buffer_t *old_buf) {
-    old_buf->host_dirty = new_buf->host_dirty();
-    old_buf->dev_dirty = new_buf->device_dirty();
-
-    // if (new_buf->device) {
-    //     if (old_buf->dev) {
-    //         old_dev_wrapper *wrapper = (old_dev_wrapper *)old_buf->dev;
-    //         wrapper->device = new_buf->device;
-    //         wrapper->interface = new_buf->device_interface;
-    //     } else {
-    //         old_dev_wrapper *wrapper = (old_dev_wrapper *)malloc(sizeof(old_dev_wrapper));
-    //         wrapper->device = new_buf->device;
-    //         wrapper->interface = new_buf->device_interface;
-    //         old_buf->dev = (uint64_t)wrapper;
-    //     }
-    // } else if (old_buf->dev) {
-    //     free((void *)old_buf->dev);
-    //     old_buf->dev = 0;
-    // }
-    assert(!new_buf->device);
-    assert(!old_buf->dev);
-
-    return 0;
+    // For the simple demo example, there should not be calls to this function:
+    std::cout << "Unexpected call to halide_downgrade_buffer_t_device_fields" << std::endl;
+    assert(false);
+    return -1;
 }
 
 int halide_error_failed_to_downgrade_buffer_t(void *user_context,
@@ -41,19 +24,10 @@ int halide_error_failed_to_downgrade_buffer_t(void *user_context,
 
 int halide_downgrade_buffer_t(void *user_context, const char *name,
                                const halide_buffer_t *new_buf, buffer_t *old_buf) {
-    memset(old_buf, 0, sizeof(buffer_t));
-    if (new_buf->dimensions > 4) {
-        return halide_error_failed_to_downgrade_buffer_t(user_context, name,
-                                                         "buffer has more than four dimensions");
-    }
-    old_buf->host = new_buf->host;
-    for (int i = 0; i < new_buf->dimensions; i++) {
-        old_buf->min[i] = new_buf->dim[i].min;
-        old_buf->extent[i] = new_buf->dim[i].extent;
-        old_buf->stride[i] = new_buf->dim[i].stride;
-    }
-    old_buf->elem_size = new_buf->type.bytes();
-    return halide_downgrade_buffer_t_device_fields(user_context, name, new_buf, old_buf);
+    // For the simple demo example, there should not be calls to this function:
+    std::cout << "Unexpected call to halide_downgrade_buffer_t" << std::endl;
+    assert(false);
+    return -1;
 }
 
 int halide_error_bad_type(void *user_context, const char *func_name,
@@ -106,35 +80,10 @@ int halide_error_failed_to_upgrade_buffer_t(void *user_context,
 
 int halide_upgrade_buffer_t(void *user_context, const char *name,
                              const buffer_t *old_buf, halide_buffer_t *new_buf) {
-    if ((old_buf->host || old_buf->dev) &&
-        (old_buf->elem_size != new_buf->type.bytes())) {
-        // Unless we're doing a bounds query, we expect the elem_size to match the type.
-        return halide_error_failed_to_upgrade_buffer_t(user_context, name, 
-                                                        "buffer has incorrect elem_size temp");
-    }
-    new_buf->host = old_buf->host;
-
-    // if (old_buf->dev) {
-    //     old_dev_wrapper *wrapper = (old_dev_wrapper *)(old_buf->dev);
-    //     new_buf->device = wrapper->device;
-    //     new_buf->device_interface = wrapper->interface;
-    // } else {
-    //     new_buf->device = 0;
-    //     new_buf->device_interface = NULL;
-    // }
-    assert(!old_buf->dev);
-    new_buf->device = 0;
-    new_buf->device_interface = NULL;
-
-    for (int i = 0; i < new_buf->dimensions; i++) {
-        new_buf->dim[i].min = old_buf->min[i];
-        new_buf->dim[i].extent = old_buf->extent[i];
-        new_buf->dim[i].stride = old_buf->stride[i];
-    }
-    new_buf->flags = 0;
-    new_buf->set_host_dirty(old_buf->host_dirty);
-    new_buf->set_device_dirty(old_buf->dev_dirty);
-    return 0;
+    // For the simple demo example, there should not be calls to this function:
+    std::cout << "Unexpected call to halide_upgrade_buffer_t" << std::endl;
+    assert(false);
+    return -1;
 }
 
 }
