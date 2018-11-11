@@ -2,8 +2,8 @@
 
 #include "HalideBuffer.h"
 
-#include "data_create.h"
-#include "halide_buffer_info.h"
+#include "data_fns.h"
+#include "halide_buffer_fns.h"
 #include "halide_myfunc.h"
 
 int main()

@@ -1,5 +1,5 @@
-#ifndef DATA_CREATE_H
-#define DATA_CREATE_H
+#ifndef DATA_FNS_H
+#define DATA_FNS_H
 
 #include <cstdint>
 
@@ -12,4 +12,4 @@ int32_t *data_create();
 
 }
 
-#endif // DATA_CREATE_H
+#endif // DATA_FNS_H

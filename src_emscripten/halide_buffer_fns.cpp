@@ -1,4 +1,4 @@
-#include "halide_buffer_info.h"
+#include "halide_buffer_fns.h"
 
 extern "C"
 {

@@ -1,5 +1,5 @@
-#ifndef HALIDE_BUFFER_INFO_H
-#define HALIDE_BUFFER_INFO_H
+#ifndef HALIDE_BUFFER_FNS_H
+#define HALIDE_BUFFER_FNS_H
 
 #include "HalideBuffer.h"
 
@@ -10,4 +10,4 @@ int32_t *get_data(halide_buffer_t *halide_buf);
 
 }
 
-#endif // HALIDE_BUFFER_INFO_H
+#endif // HALIDE_BUFFER_FNS_H
