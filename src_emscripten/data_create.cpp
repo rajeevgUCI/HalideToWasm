@@ -1,6 +1,3 @@
-#include <stdlib.h> // for malloc
-#include <string.h> // for memset
-
 #include "data_create.h"
 
 const int OUTPUT_WIDTH = 8;
@@ -21,8 +18,7 @@ int get_height()
 
 int32_t *data_create()
 {
-    int32_t *data = (int32_t *)(malloc((OUTPUT_WIDTH * OUTPUT_HEIGHT) * sizeof(int32_t)));
-    memset(data, 0, (OUTPUT_WIDTH * OUTPUT_HEIGHT) * sizeof(int32_t));
+    int32_t *data = new int32_t[OUTPUT_WIDTH * OUTPUT_HEIGHT](); // parentheses to value-initialize to all 0s
     data[0] = 6;
     data[1] = 12;
     data[2] = 18;
