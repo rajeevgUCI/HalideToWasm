@@ -8,23 +8,25 @@
 
 int main()
 {
+    std::cout << "In C++" << std::endl;
+
     int32_t *data = data_create();
     int width = get_width();
     int height = get_height();
 
     Halide::Runtime::Buffer<int32_t> halide_buf_wrapper(data, width, height);
     halide_buffer_t *halide_buf = halide_buf_wrapper.raw_buffer();
-    std::cout << "halide_buf = " << halide_buf << std::endl;
+    std::cout << "halide_buf address = " << halide_buf << std::endl;
 
-    std::cout << "Data width = " << width << ", height = " << height << std::endl;
     int32_t *halide_data = get_data(halide_buf);
-    std::cout << "halide_data = " << halide_data << std::endl;
-    std::cout << "Array:" << std::endl;
-    for(int i = 0; i < width * height; ++i)
+    std::cout << "halide_buf data address = " << halide_data << std::endl;
+    std::cout << "halide_buf data in memory:" << std::endl;
+    std::cout << halide_data[0];
+    for(int i = 1; i < width * height; ++i)
     {
-        std::cout << "data[" << i << "] = " << halide_data[i] << std::endl;
+        std::cout << ", " << halide_data[i];
     }
-    std::cout << "Done." << std::endl;
+    std::cout << std::endl;
     
     std::cout << "Calling myfunc..." << std::endl;
     halide_myfunc(halide_buf);

@@ -1,6 +1,8 @@
 mergeInto(LibraryManager.library, {
     halide_myfunc: function(halideBuf) {
-        Module.print(`halideBuf = ${halideBuf}`);
+        Module.print("In JS");
+
+        Module.print(`halideBuf address = 0x${halideBuf.toString(16)}`);
 
         let custom_halide_downgrade_buffer_t = Module.cwrap('custom_halide_downgrade_buffer_t', 'number', ['number', 'number', 'number', 'number']);
         let custom_halide_downgrade_buffer_t_device_fields = Module.cwrap('custom_halide_downgrade_buffer_t_device_fields', 'number', ['number', 'number', 'number', 'number']);
@@ -17,8 +19,7 @@ mergeInto(LibraryManager.library, {
 		let get_width = Module.cwrap('get_width', 'number', []);
 		let get_height = Module.cwrap('get_height', 'number', []);
 
-        Module.print(`memory = ${Module.wasmMemory}`);
-        Module.print(`halideBuf data = ${get_data(halideBuf)}`);
+        Module.print(`halideBuf data address = 0x${get_data(halideBuf).toString(16)}`);
         let halideBufData_32Bit = get_data(halideBuf) / 4; // divide 8-bit address by 4 to get 32-bit address
         let width = get_width();
         let height = get_height();
