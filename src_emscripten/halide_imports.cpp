@@ -1,8 +1,7 @@
-#include <string.h> // for memset. In wasm, will be imported from memory.wasm .
+#include "halide_imports.h"
+
 #include <iostream>
 #include <cassert>
-
-#include "halide_imports.h"
 
 extern "C"
 {

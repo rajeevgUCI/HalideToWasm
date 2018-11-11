@@ -1,7 +1,9 @@
 #include <iostream>
 
+#include "HalideBuffer.h"
+
 #include "data_create.h"
-#include "halide_buffer_create.h"
+#include "halide_buffer_info.h"
 #include "halide_myfunc.h"
 
 int main()
@@ -10,7 +12,8 @@ int main()
     int width = get_width();
     int height = get_height();
 
-    halide_buffer_t *halide_buf = create_buffer(data, width, height);
+    Halide::Runtime::Buffer<int32_t> halide_buf_wrapper(data, width, height);
+    halide_buffer_t *halide_buf = halide_buf_wrapper.raw_buffer();
     std::cout << "halide_buf = " << halide_buf << std::endl;
 
     std::cout << "Data width = " << width << ", height = " << height << std::endl;
