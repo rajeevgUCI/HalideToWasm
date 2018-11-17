@@ -1,3 +1,8 @@
+let Module = {
+    'print': (s) => console.log(s),
+    'printErr': (s) => console.error(s)
+};
+
 mergeInto(LibraryManager.library, {
     halide_myfunc: function(halideBuf) {
         Module.print("In JS");
@@ -27,7 +32,7 @@ mergeInto(LibraryManager.library, {
         Module.print('halideBuf data in wasm memory:');
         Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
 
-        WebAssembly.instantiateStreaming(fetch('myfunc.wasm'), {
+        WebAssembly.instantiateStreaming(fetch('bin/myfunc.wasm'), {
             env: {
                 memory: Module.wasmMemory,
                 halide_downgrade_buffer_t: custom_halide_downgrade_buffer_t,
