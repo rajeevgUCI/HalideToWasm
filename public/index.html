@@ -72,24 +72,35 @@ var Module = { // Note: have to use var rather than let, for compatability with 
         img.addEventListener('load', () => {
             const width = 512;
             const height = 512;
+            // HACK: get image array by drawing to canvas:
             srcCtx.drawImage(img, 0, 0, width, height);
             let srcImageData = srcCtx.getImageData(0, 0, width, height);
-            let outImageDataRed = new Uint8Array(width * height);
+            let srcImageDataRed = new Uint8Array(width * height);
             // Set to red channel:
-            for(let i = 0; i < outImageDataRed.length; i++)
+            for(let i = 0; i < srcImageDataRed.length; i++)
             {
-                outImageDataRed[i] = srcImageData.data[i * 4];
+                srcImageDataRed[i] = srcImageData.data[i * 4];
             }
-            console.log(outImageDataRed);
+            console.log(srcImageDataRed);
+            let srcImageDataArray = new Uint8ClampedArray(srcImageData.data);
+            // Set red, green, and blue channel to srcImageDataRed:
+            for(let i = 0; i < srcImageDataRed.length; i++)
+            {
+                srcImageDataArray[4 * i] = srcImageDataRed[i];
+                srcImageDataArray[4 * i + 1] = srcImageDataRed[i];
+                srcImageDataArray[4 * i + 2] = srcImageDataRed[i];
+            }
+            srcImageData = new ImageData(srcImageDataArray, width, height);
+            srcCtx.putImageData(srcImageData, 0, 0);
 
-            let dataHeapBytePtr = Module._malloc(outImageDataRed.length * outImageDataRed.BYTES_PER_ELEMENT);
+            let dataHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
             console.log(dataHeapBytePtr);
-            Module.HEAPU8.set(outImageDataRed, dataHeapBytePtr);
+            Module.HEAPU8.set(srcImageDataRed, dataHeapBytePtr);
             let run_demo = Module.cwrap('run_demo', 'number', ['number', 'number', 'number']);
             let halideBufPtr = run_demo(dataHeapBytePtr, width, height);
 
             halide_myfunc(Module, halideBufPtr, width, height, () => {
-                outImageDataRed = Module.HEAPU8.slice(dataHeapBytePtr, dataHeapBytePtr + width * height);
+                let outImageDataRed = Module.HEAPU8.slice(dataHeapBytePtr, dataHeapBytePtr + width * height);
                 let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
                 // Set red, green, and blue channel to outImageDatRed:
                 for(let i = 0; i < outImageDataRed.length; i++)
