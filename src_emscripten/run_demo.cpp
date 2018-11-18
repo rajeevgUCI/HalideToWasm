@@ -5,12 +5,11 @@
 #include "HalideBuffer.h"
 
 #include "halide_buffer_fns.h"
-#include "halide_myfunc.h"
 
 extern "C"
 {
 
-void run_demo(int32_t *data, int width, int height)
+halide_buffer_t *run_demo(int32_t *data, int width, int height)
 {
     std::cout << "In C++" << std::endl;
 
@@ -30,11 +29,9 @@ void run_demo(int32_t *data, int width, int height)
     }
     std::cout << std::endl;
 
-    std::cout << "Calling myfunc..." << std::endl;
-    halide_myfunc(halide_buf, width, height);
+    return halide_buf;
 
-    // TODO: free halide_buf_wrapper after halide_myfunc completes. This will require a callback,
-    // since halide_myfunc has async code.
+    // TODO: free halide_buf_wrapper. This will perhaps require a callback.
 }
 
 }
