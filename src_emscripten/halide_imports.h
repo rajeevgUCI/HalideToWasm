@@ -21,6 +21,10 @@ int custom_halide_error_bad_type(void *user_context, const char *func_name,
                                    uint8_t bits_given, uint8_t correct_bits,
                                    uint16_t lanes_given, uint16_t correct_lanes);
 
+int custom_halide_error_access_out_of_bounds(void *user_context, const char *func_name,
+                                               int dimension, int min_touched, int max_touched,
+                                               int min_valid, int max_valid);
+
 int custom_halide_error_buffer_allocation_too_large(void *user_context, const char *buffer_name,
                                                         uint64_t allocation_size, uint64_t max_size);
 

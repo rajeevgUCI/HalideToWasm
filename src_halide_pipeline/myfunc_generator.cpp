@@ -18,15 +18,16 @@ int main(int argc, char **argv) {
 
     Func myfunc("myfunc");
     Var x("x"), y("y");
+    ImageParam input(UInt(8), 2);
 
-    myfunc(x, y) = cast(UInt(8), x + y);
+    myfunc(x, y) = cast(UInt(8), input(x, y) + x + y);
 
     std::cout << "first output type = " << myfunc.output_types()[0] << std::endl;
 
-    myfunc.compile_to_assembly(argv[1], {}, target);
+    myfunc.compile_to_assembly(argv[1], {input}, target);
 
     // For reference, to view expected arguments and return type:
-    // myfunc.compile_to_header("myfunc.h", {});
+    // myfunc.compile_to_header("myfunc.h", {input});
 
     return 0;
 }

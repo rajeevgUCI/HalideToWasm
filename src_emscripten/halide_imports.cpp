@@ -37,6 +37,14 @@ int custom_halide_error_bad_type(void *user_context, const char *func_name,
     return halide_error_code_bad_type;
 }
 
+int custom_halide_error_access_out_of_bounds(void *user_context, const char *func_name,
+                                               int dimension, int min_touched, int max_touched,
+                                               int min_valid, int max_valid)
+{
+    std::cout << "custom_halide_error_access_out_of_bounds" << std::endl;
+    return halide_error_code_access_out_of_bounds;
+}
+
 int custom_halide_error_buffer_allocation_too_large(void *user_context, const char *buffer_name,
                                                 uint64_t allocation_size, uint64_t max_size) {
     std::cout << "custom_halide_error_code_buffer_allocation_too_large" << std::endl;

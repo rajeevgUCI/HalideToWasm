@@ -17,14 +17,16 @@
         <a title="Rob Mitchell [CC0], via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Foden_truck_(15260849919).jpg">Image Source: Rob Mitchell [CC0], via Wikimedia Commons</a>
     </div>
 <script>
-function halide_myfunc(Module, halideBuf, width, height, doneCallback) {
+function halide_myfunc(Module, halideBufInput, halideBufOutput, width, height, doneCallback) {
     Module.print("In JS");
 
-    Module.print(`halideBuf address = 0x${halideBuf.toString(16)}`);
+    Module.print(`halideBufInput address = 0x${halideBufInput.toString(16)}`);
+    Module.print(`halideBufOutput address = 0x${halideBufOutput.toString(16)}`);
 
     let custom_halide_downgrade_buffer_t = Module.cwrap('custom_halide_downgrade_buffer_t', 'number', ['number', 'number', 'number', 'number']);
     let custom_halide_downgrade_buffer_t_device_fields = Module.cwrap('custom_halide_downgrade_buffer_t_device_fields', 'number', ['number', 'number', 'number', 'number']);
     let custom_halide_error_bad_type = Module.cwrap('custom_halide_error_bad_type', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
+    let custom_halide_error_access_out_of_bounds = Module.cwrap('custom_halide_error_access_out_of_bounds', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number']);
     let custom_halide_error_buffer_allocation_too_large = Module.cwrap('custom_halide_error_buffer_allocation_too_large', 'number', ['number', 'number', 'number', 'number']);
     let custom_halide_error_buffer_argument_is_null = Module.cwrap('custom_halide_error_buffer_argument_is_null', 'number', ['number', 'number']);
     let custom_halide_error_buffer_extents_negative = Module.cwrap('custom_halide_error_buffer_extents_negative', 'number', ['number', 'number', 'number', 'number']);
@@ -35,10 +37,10 @@ function halide_myfunc(Module, halideBuf, width, height, doneCallback) {
 
     let get_halide_buffer_data = Module.cwrap('get_halide_buffer_data', 'number', ['number']);
 
-    Module.print(`halideBuf data address = 0x${get_halide_buffer_data(halideBuf).toString(16)}`);
-    let halideBufDataBytePtr = get_halide_buffer_data(halideBuf);
-    Module.print('halideBuf data in wasm memory:');
-    Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufDataBytePtr, halideBufDataBytePtr + width * height));
+    let halideBufInputDataBytePtr = get_halide_buffer_data(halideBufInput);
+    Module.print(`halideBufInput data address = 0x${halideBufInputDataBytePtr.toString(16)}`);
+    Module.print('halideBufInput data in wasm memory:');
+    Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufInputDataBytePtr, halideBufInputDataBytePtr + width * height));
 
     WebAssembly.instantiateStreaming(fetch('bin/myfunc.wasm'), {
         env: {
@@ -46,6 +48,7 @@ function halide_myfunc(Module, halideBuf, width, height, doneCallback) {
             halide_downgrade_buffer_t: custom_halide_downgrade_buffer_t,
             halide_downgrade_buffer_t_device_fields: custom_halide_downgrade_buffer_t_device_fields,
             halide_error_bad_type: custom_halide_error_bad_type,
+            halide_error_access_out_of_bounds: custom_halide_error_access_out_of_bounds,
             halide_error_buffer_allocation_too_large: custom_halide_error_buffer_allocation_too_large,
             halide_error_buffer_argument_is_null: custom_halide_error_buffer_argument_is_null,
             halide_error_buffer_extents_negative: custom_halide_error_buffer_extents_negative,
@@ -56,10 +59,11 @@ function halide_myfunc(Module, halideBuf, width, height, doneCallback) {
         }
     })
     .then(myFuncWasm => {
-        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBuf);
+        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, halideBufOutput);
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
-        Module.print('halideBuf data in wasm memory:');
-        Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufDataBytePtr, halideBufDataBytePtr + width * height));
+        let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
+        Module.print('halideBufOutput data in wasm memory:');
+        Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufOutputDataBytePtr, halideBufOutputDataBytePtr + width * height));
 
         doneCallback();
     });
@@ -81,6 +85,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             {
                 srcImageDataRed[i] = srcImageData.data[i * 4];
             }
+            console.log('srcImageDataRed:');
             console.log(srcImageDataRed);
             let srcImageDataArray = new Uint8ClampedArray(srcImageData.data);
             // Set red, green, and blue channel to srcImageDataRed:
@@ -93,14 +98,16 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             srcImageData = new ImageData(srcImageDataArray, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
 
-            let dataHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
-            console.log(dataHeapBytePtr);
-            Module.HEAPU8.set(srcImageDataRed, dataHeapBytePtr);
             let run_demo = Module.cwrap('run_demo', 'number', ['number', 'number', 'number']);
-            let halideBufPtr = run_demo(dataHeapBytePtr, width, height);
+            let dataSrcHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
+            Module.HEAPU8.set(srcImageDataRed, dataSrcHeapBytePtr);
+            console.log(`dataSrcHeapBytePtr = 0x${dataSrcHeapBytePtr.toString(16)}`);
+            let halideBufInputPtr = run_demo(dataSrcHeapBytePtr, width, height);
+            let dataOutputHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
+            let halideBufOutputPtr = run_demo(dataOutputHeapBytePtr, width, height);
 
-            halide_myfunc(Module, halideBufPtr, width, height, () => {
-                let outImageDataRed = Module.HEAPU8.slice(dataHeapBytePtr, dataHeapBytePtr + width * height);
+            halide_myfunc(Module, halideBufInputPtr, halideBufOutputPtr, width, height, () => {
+                let outImageDataRed = Module.HEAPU8.slice(dataOutputHeapBytePtr, dataOutputHeapBytePtr + width * height);
                 let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
                 // Set red, green, and blue channel to outImageDatRed:
                 for(let i = 0; i < outImageDataRed.length; i++)
@@ -110,6 +117,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                     outImageDataArray[4 * i + 2] = outImageDataRed[i];
                 }
                 let outImageData = new ImageData(outImageDataArray, width, height);
+                console.log('outImageData:');
                 console.log(outImageData);
                 outCtx.putImageData(outImageData, 0, 0);
             });
