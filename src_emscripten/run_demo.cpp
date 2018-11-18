@@ -1,3 +1,5 @@
+#include "run_demo.h"
+
 #include <iostream>
 
 #include "HalideBuffer.h"
@@ -6,7 +8,10 @@
 #include "halide_buffer_fns.h"
 #include "halide_myfunc.h"
 
-int main()
+extern "C"
+{
+
+void run_demo()
 {
     std::cout << "In C++" << std::endl;
 
@@ -27,9 +32,9 @@ int main()
         std::cout << ", " << halide_data[i];
     }
     std::cout << std::endl;
-    
+
     std::cout << "Calling myfunc..." << std::endl;
     halide_myfunc(halide_buf);
+}
 
-    return 0;
 }

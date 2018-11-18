@@ -37,6 +37,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             let outImageData = new ImageData(outImageDataArray, width, height);
             console.log(outImageData);
             outCtx.putImageData(outImageData, 0, 0);
+
+            let run_demo = Module.cwrap('run_demo', null, []);
+            run_demo();
         });
         img.src = 'foden-truck.jpg';
     }
