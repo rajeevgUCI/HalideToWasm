@@ -6,7 +6,38 @@
     <meta name="description" content="HalideToWasm demo">
 </head>
 <body>
-    <p>Open JavaScript console to view output.</p>
+    <div>
+        <p>Open JavaScript console to view output.</p>
+    </div>
+    <div>
+        <canvas id="canvas-image-src" width="512" height="512"></canvas>
+        <canvas id="canvas-image-out" width="512" height="512"></canvas>
+    </div>
+    <div>
+        <a title="Rob Mitchell [CC0], via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Foden_truck_(15260849919).jpg">Image Source: Rob Mitchell [CC0], via Wikimedia Commons</a>
+    </div>
 <script src="bin/index.js"></script>
+<script>
+let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
+let outCtx = document.getElementById('canvas-image-out').getContext('2d');
+let img = new Image();
+img.addEventListener('load', () => {
+    let width = 512;
+    let height = 512;
+    srcCtx.drawImage(img, 0, 0, width, height);
+    let srcImageData = srcCtx.getImageData(0, 0, width, height);
+    let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
+    // Set green and blue channel to red channel:
+    for(let i = 0; i < outImageDataArray.length; i += 4)
+    {
+        outImageDataArray[i + 1] = outImageDataArray[i];
+        outImageDataArray[i + 2] = outImageDataArray[i];
+    }
+    let outImageData = new ImageData(outImageDataArray, width, height);
+    console.log(outImageData);
+    outCtx.putImageData(outImageData, 0, 0);
+});
+img.src = 'foden-truck.jpg';
+</script>
 </body>
 </html>
