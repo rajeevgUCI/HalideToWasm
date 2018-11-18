@@ -6,7 +6,7 @@
 extern "C"
 {
 
-int32_t *get_data(halide_buffer_t *halide_buf);
+int32_t *get_halide_buffer_data(halide_buffer_t *halide_buf);
 
 }
 

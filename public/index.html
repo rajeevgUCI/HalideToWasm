@@ -38,8 +38,21 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log(outImageData);
             outCtx.putImageData(outImageData, 0, 0);
 
-            let run_demo = Module.cwrap('run_demo', null, []);
-            run_demo();
+            const outputWidth = 8;
+            const outputHeight = 4;
+            let data = new Int32Array(outputWidth * outputHeight);
+            data[0] = 6;
+            data[1] = 12;
+            data[2] = 18;
+            data[outputWidth * outputHeight - 1] = 24;
+            let dataHeapPtr = Module._malloc(data.length * data.BYTES_PER_ELEMENT);
+            let dataHeapPtr32 = dataHeapPtr / 4; // because 4 bytes per 32 bits
+            console.log(dataHeapPtr32);
+            Module.HEAP32.set(data, dataHeapPtr32);
+            let run_demo = Module.cwrap('run_demo', null, ['number', 'number', 'number']);
+            run_demo(dataHeapPtr, outputWidth, outputHeight);
+            // TODO: Module._free data after demo is complete. This will require a callback, since
+            // run_demo runs async code.
         });
         img.src = 'foden-truck.jpg';
     }

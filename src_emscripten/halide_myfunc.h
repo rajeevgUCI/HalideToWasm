@@ -6,7 +6,7 @@
 extern "C"
 {
 
-    extern void halide_myfunc(halide_buffer_t *halide_buf);
+    extern void halide_myfunc(halide_buffer_t *halide_buf, int width, int height);
 
 }
 
