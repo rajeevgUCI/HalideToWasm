@@ -17,7 +17,7 @@
         <a title="Rob Mitchell [CC0], via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File:Foden_truck_(15260849919).jpg">Image Source: Rob Mitchell [CC0], via Wikimedia Commons</a>
     </div>
 <script>
-function halide_myfunc(Module, halideBuf, width, height) {
+function halide_myfunc(Module, halideBuf, width, height, doneCallback) {
     Module.print("In JS");
 
     Module.print(`halideBuf address = 0x${halideBuf.toString(16)}`);
@@ -60,6 +60,8 @@ function halide_myfunc(Module, halideBuf, width, height) {
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         Module.print('halideBuf data in wasm memory:');
         Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufDataBytePtr, halideBufDataBytePtr + width * height));
+
+        doneCallback();
     });
 }
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
@@ -68,38 +70,40 @@ var Module = { // Note: have to use var rather than let, for compatability with 
         let outCtx = document.getElementById('canvas-image-out').getContext('2d');
         let img = new Image();
         img.addEventListener('load', () => {
-            let width = 512;
-            let height = 512;
+            const width = 512;
+            const height = 512;
             srcCtx.drawImage(img, 0, 0, width, height);
             let srcImageData = srcCtx.getImageData(0, 0, width, height);
-            let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
-            // Set green and blue channel to red channel:
-            for(let i = 0; i < outImageDataArray.length; i += 4)
+            let outImageDataRed = new Uint8Array(width * height);
+            // Set to red channel:
+            for(let i = 0; i < outImageDataRed.length; i++)
             {
-                outImageDataArray[i + 1] = outImageDataArray[i];
-                outImageDataArray[i + 2] = outImageDataArray[i];
+                outImageDataRed[i] = srcImageData.data[i * 4];
             }
-            let outImageData = new ImageData(outImageDataArray, width, height);
-            console.log(outImageData);
-            outCtx.putImageData(outImageData, 0, 0);
+            console.log(outImageDataRed);
 
-            const outputWidth = 8;
-            const outputHeight = 4;
-            let data = new Uint8Array(outputWidth * outputHeight);
-            data[0] = 6;
-            data[1] = 12;
-            data[2] = 18;
-            data[outputWidth * outputHeight - 1] = 24;
-            let dataHeapBytePtr = Module._malloc(data.length * data.BYTES_PER_ELEMENT);
+            let dataHeapBytePtr = Module._malloc(outImageDataRed.length * outImageDataRed.BYTES_PER_ELEMENT);
             console.log(dataHeapBytePtr);
-            Module.HEAPU8.set(data, dataHeapBytePtr);
+            Module.HEAPU8.set(outImageDataRed, dataHeapBytePtr);
             let run_demo = Module.cwrap('run_demo', 'number', ['number', 'number', 'number']);
-            let halideBufPtr = run_demo(dataHeapBytePtr, outputWidth, outputHeight);
+            let halideBufPtr = run_demo(dataHeapBytePtr, width, height);
 
-            halide_myfunc(Module, halideBufPtr, outputWidth, outputHeight);
+            halide_myfunc(Module, halideBufPtr, width, height, () => {
+                outImageDataRed = Module.HEAPU8.slice(dataHeapBytePtr, dataHeapBytePtr + width * height);
+                let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
+                // Set red, green, and blue channel to outImageDatRed:
+                for(let i = 0; i < outImageDataRed.length; i++)
+                {
+                    outImageDataArray[4 * i] = outImageDataRed[i];
+                    outImageDataArray[4 * i + 1] = outImageDataRed[i];
+                    outImageDataArray[4 * i + 2] = outImageDataRed[i];
+                }
+                let outImageData = new ImageData(outImageDataArray, width, height);
+                console.log(outImageData);
+                outCtx.putImageData(outImageData, 0, 0);
+            });
 
-            // TODO: Module._free data after demo is complete. This will require a callback, since
-            // run_demo runs async code.
+            // TODO: Module._free malloc'd data after demo is complete
         });
         img.src = 'foden-truck.jpg';
     }
