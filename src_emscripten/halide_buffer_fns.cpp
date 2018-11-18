@@ -7,7 +7,7 @@
 extern "C"
 {
 
-halide_buffer_t *run_demo(uint8_t *data, int width, int height)
+halide_buffer_t *create_halide_buffer(uint8_t *data, int width, int height)
 {
     std::cout << "In C++" << std::endl;
 

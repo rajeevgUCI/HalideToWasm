@@ -98,13 +98,13 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             srcImageData = new ImageData(srcImageDataArray, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
 
-            let run_demo = Module.cwrap('run_demo', 'number', ['number', 'number', 'number']);
+            let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
             let dataSrcHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
             Module.HEAPU8.set(srcImageDataRed, dataSrcHeapBytePtr);
             console.log(`dataSrcHeapBytePtr = 0x${dataSrcHeapBytePtr.toString(16)}`);
-            let halideBufInputPtr = run_demo(dataSrcHeapBytePtr, width, height);
+            let halideBufInputPtr = create_halide_buffer(dataSrcHeapBytePtr, width, height);
             let dataOutputHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
-            let halideBufOutputPtr = run_demo(dataOutputHeapBytePtr, width, height);
+            let halideBufOutputPtr = create_halide_buffer(dataOutputHeapBytePtr, width, height);
 
             halide_myfunc(Module, halideBufInputPtr, halideBufOutputPtr, width, height, () => {
                 let outImageDataRed = Module.HEAPU8.slice(dataOutputHeapBytePtr, dataOutputHeapBytePtr + width * height);
