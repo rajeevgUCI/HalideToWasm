@@ -4,7 +4,6 @@ PUBLIC_BIN_DIR = public/bin
 
 EMSCRIPTEN_SRC_DIR = src_emscripten
 EMSCRIPTEN_SRC_CPP = $(wildcard $(EMSCRIPTEN_SRC_DIR)/*.cpp)
-EMSCRIPTEN_SRC_JS = $(EMSCRIPTEN_SRC_DIR)/emscripten_prejs.js
 EMSCRIPTEN_OUT_JS = $(PUBLIC_BIN_DIR)/emscripten-halide.js
 EMSCRIPTEN_EXPORTED_FNS = '["_create_halide_buffer", "_custom_halide_downgrade_buffer_t", "_custom_halide_downgrade_buffer_t_device_fields", "_custom_halide_error_bad_type", "_custom_halide_error_access_out_of_bounds", "_custom_halide_error_buffer_allocation_too_large", "_custom_halide_error_buffer_argument_is_null", "_custom_halide_error_buffer_extents_negative", "_custom_halide_error_buffer_extents_too_large", "_custom_halide_error_constraint_violated", "_custom_halide_error_host_is_null", "_custom_halide_upgrade_buffer_t", "_get_halide_buffer_data"]'
 EMSCRIPTEN_EXTRA_EXPORTED_RUNTIME_METHODS = '["cwrap", "print", "printErr"]'
@@ -19,9 +18,9 @@ HALIDE_PIPELINE_WASM = $(PUBLIC_BIN_DIR)/myfunc.wasm
 
 all: $(EMSCRIPTEN_OUT_JS) $(HALIDE_PIPELINE_WASM)
 
-$(EMSCRIPTEN_OUT_JS): $(EMSCRIPTEN_SRC_JS) $(EMSCRIPTEN_SRC_CPP)
+$(EMSCRIPTEN_OUT_JS): $(EMSCRIPTEN_SRC_CPP)
 	mkdir -p $(PUBLIC_BIN_DIR)
-	emcc --js-library $(EMSCRIPTEN_SRC_JS) $(EMSCRIPTEN_SRC_CPP) -std=c++11 -I $(HALIDE_LIB)/include/ -s EXPORTED_FUNCTIONS=$(EMSCRIPTEN_EXPORTED_FNS) -s EXTRA_EXPORTED_RUNTIME_METHODS=$(EMSCRIPTEN_EXTRA_EXPORTED_RUNTIME_METHODS) -o $(EMSCRIPTEN_OUT_JS)
+	emcc $(EMSCRIPTEN_SRC_CPP) -std=c++11 -I $(HALIDE_LIB)/include/ -s EXPORTED_FUNCTIONS=$(EMSCRIPTEN_EXPORTED_FNS) -s EXTRA_EXPORTED_RUNTIME_METHODS=$(EMSCRIPTEN_EXTRA_EXPORTED_RUNTIME_METHODS) -o $(EMSCRIPTEN_OUT_JS)
 
 $(HALIDE_PIPELINE_WASM): $(HALIDE_PIPELINE_SRC)
 	mkdir -p $(HALIDE_PIPELINE_BIN_DIR)
