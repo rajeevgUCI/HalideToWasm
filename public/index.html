@@ -36,9 +36,9 @@ function halide_myfunc(Module, halideBuf, width, height) {
     let get_halide_buffer_data = Module.cwrap('get_halide_buffer_data', 'number', ['number']);
 
     Module.print(`halideBuf data address = 0x${get_halide_buffer_data(halideBuf).toString(16)}`);
-    let halideBufData_32Bit = get_halide_buffer_data(halideBuf) / 4; // divide 8-bit address by 4 to get 32-bit address
+    let halideBufDataBytePtr = get_halide_buffer_data(halideBuf);
     Module.print('halideBuf data in wasm memory:');
-    Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
+    Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufDataBytePtr, halideBufDataBytePtr + width * height));
 
     WebAssembly.instantiateStreaming(fetch('bin/myfunc.wasm'), {
         env: {
@@ -59,7 +59,7 @@ function halide_myfunc(Module, halideBuf, width, height) {
         let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBuf);
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         Module.print('halideBuf data in wasm memory:');
-        Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufData_32Bit, halideBufData_32Bit + width * height));
+        Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufDataBytePtr, halideBufDataBytePtr + width * height));
     });
 }
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
@@ -85,17 +85,16 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             const outputWidth = 8;
             const outputHeight = 4;
-            let data = new Int32Array(outputWidth * outputHeight);
+            let data = new Uint8Array(outputWidth * outputHeight);
             data[0] = 6;
             data[1] = 12;
             data[2] = 18;
             data[outputWidth * outputHeight - 1] = 24;
-            let dataHeapPtr = Module._malloc(data.length * data.BYTES_PER_ELEMENT);
-            let dataHeapPtr32 = dataHeapPtr / 4; // because 4 bytes per 32 bits
-            console.log(dataHeapPtr32);
-            Module.HEAP32.set(data, dataHeapPtr32);
+            let dataHeapBytePtr = Module._malloc(data.length * data.BYTES_PER_ELEMENT);
+            console.log(dataHeapBytePtr);
+            Module.HEAPU8.set(data, dataHeapBytePtr);
             let run_demo = Module.cwrap('run_demo', 'number', ['number', 'number', 'number']);
-            let halideBufPtr = run_demo(dataHeapPtr, outputWidth, outputHeight);
+            let halideBufPtr = run_demo(dataHeapBytePtr, outputWidth, outputHeight);
 
             halide_myfunc(Module, halideBufPtr, outputWidth, outputHeight);
 

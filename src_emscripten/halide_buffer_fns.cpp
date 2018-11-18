@@ -3,9 +3,9 @@
 extern "C"
 {
 
-int32_t *get_halide_buffer_data(halide_buffer_t *halide_buf)
+uint8_t *get_halide_buffer_data(halide_buffer_t *halide_buf)
 {
-    return (int32_t *)(halide_buf->host);
+    return (uint8_t *)(halide_buf->host);
 }
 
 }

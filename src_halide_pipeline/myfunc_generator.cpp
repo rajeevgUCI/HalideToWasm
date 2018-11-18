@@ -19,7 +19,7 @@ int main(int argc, char **argv) {
     Func myfunc("myfunc");
     Var x("x"), y("y");
 
-    myfunc(x, y) = x + y;
+    myfunc(x, y) = cast(UInt(8), x + y);
 
     std::cout << "first output type = " << myfunc.output_types()[0] << std::endl;
 

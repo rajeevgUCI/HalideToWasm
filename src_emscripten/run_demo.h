@@ -8,7 +8,7 @@ struct halide_buffer_t;
 extern "C"
 {
 
-halide_buffer_t *run_demo(int32_t *data, int width, int height);
+halide_buffer_t *run_demo(uint8_t *data, int width, int height);
 
 }
 
