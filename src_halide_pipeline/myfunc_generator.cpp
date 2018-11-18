@@ -20,7 +20,7 @@ int main(int argc, char **argv) {
     Var x("x"), y("y");
     ImageParam input(UInt(8), 2);
 
-    myfunc(x, y) = cast(UInt(8), input(x, y) + x + y);
+    myfunc(x, y) = 255 - input(x, y);
 
     std::cout << "first output type = " << myfunc.output_types()[0] << std::endl;
 
