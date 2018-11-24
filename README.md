@@ -15,9 +15,7 @@ More details on some of those steps below.
 ## Set up dependencies ##
 Install emscripten and activate the tools. See instructions [here](http://kripken.github.io/emscripten-site/docs/getting_started/downloads.html).
 
-Clone and build [my fork of the Halide library](https://github.com/rajeevgUCI/Halide). Instructions for building it is in the README for that repository.
-
-Clone and build [binaryen](https://github.com/WebAssembly/binaryen). Note: the 1.37.38 release was used for this demo.
+Clone and build [my fork of the Halide library](https://github.com/rajeevgUCI/Halide) and LLVM. Instructions for building both are in the README for the Halide repository.
 
 Clone and build [wabt](https://github.com/WebAssembly/wabt). Note: the 1.0.0 release was used for this demo.
 

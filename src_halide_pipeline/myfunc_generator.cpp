@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 
     std::cout << "first output type = " << myfunc.output_types()[0] << std::endl;
 
-    myfunc.compile_to_assembly(argv[1], {input}, target);
+    myfunc.compile_to_bitcode(argv[1], {input}, target);
 
     // For reference, to view expected arguments and return type:
     // myfunc.compile_to_header("myfunc.h", {input});
