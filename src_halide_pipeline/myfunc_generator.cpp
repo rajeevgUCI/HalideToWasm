@@ -7,12 +7,7 @@ int main(int argc, char **argv) {
         return -1;
     }
 
-    Halide::Target target = Halide::get_target_from_environment();
-    if (target.arch != Halide::Target::WebAssembly) {
-        std::cout << "Skipping WebAssembly test since WebAssembly is not specified in the target.\n";
-        return 0;
-    }
-    target.set_feature(Halide::Target::NoRuntime);
+    Halide::Target target = Halide::Target("webassembly-32-os_unknown-no_runtime");
 
     Halide::Func myfunc("myfunc");
     Halide::Var x("x"), y("y");
