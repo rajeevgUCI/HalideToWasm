@@ -12,10 +12,16 @@ HALIDE_PIPELINE_BIN_DIR = bin_halide_pipeline
 HALIDE_PIPELINE_SRC_DIR = src_halide_pipeline
 HALIDE_PIPELINE_SRC = $(HALIDE_PIPELINE_SRC_DIR)/myfunc_generator.cpp
 HALIDE_PIPELINE_EXE = $(HALIDE_PIPELINE_BIN_DIR)/myfunc_generator
-HALIDE_PIPELINE_BC = $(HALIDE_PIPELINE_BIN_DIR)/myfunc.bc
+HALIDE_PIPELINE_BC_NAME = myfunc
+HALIDE_PIPELINE_BC = $(HALIDE_PIPELINE_BIN_DIR)/$(HALIDE_PIPELINE_BC_NAME).bc
 HALIDE_PIPELINE_OBJ = $(HALIDE_PIPELINE_BIN_DIR)/myfunc.o
 HALIDE_PIPELINE_WAST = $(HALIDE_PIPELINE_BIN_DIR)/myfunc.wast
 HALIDE_PIPELINE_WASM = $(PUBLIC_BIN_DIR)/myfunc.wasm
+
+# specified in $(HALIDE_PIPELINE_SRC) code:
+HALIDE_PIPELINE_GENERATOR_NAME = myfunc
+
+HALIDE_GENGEN_SRC = $(HALIDE_LIB)/tools/GenGen.cpp
 
 all: $(EMSCRIPTEN_OUT_JS) $(HALIDE_PIPELINE_WASM)
 
@@ -26,8 +32,8 @@ $(EMSCRIPTEN_OUT_JS): $(EMSCRIPTEN_SRC_CPP)
 $(HALIDE_PIPELINE_WASM): $(HALIDE_PIPELINE_SRC)
 	mkdir -p $(HALIDE_PIPELINE_BIN_DIR)
 	mkdir -p $(PUBLIC_BIN_DIR)
-	g++ $(HALIDE_PIPELINE_SRC) -I $(HALIDE_LIB)/include/ -L $(HALIDE_LIB)/bin/ -lHalide -lpthread -ldl -o $(HALIDE_PIPELINE_EXE) -std=c++11
-	$(HALIDE_PIPELINE_EXE) "$(HALIDE_PIPELINE_BC)"
+	g++ $(HALIDE_PIPELINE_SRC) $(HALIDE_GENGEN_SRC) -I $(HALIDE_LIB)/include/ -L $(HALIDE_LIB)/bin/ -lHalide -lpthread -ldl -o $(HALIDE_PIPELINE_EXE) -fno-rtti -std=c++11
+	$(HALIDE_PIPELINE_EXE) -g $(HALIDE_PIPELINE_GENERATOR_NAME) -o $(HALIDE_PIPELINE_BIN_DIR) -n "$(HALIDE_PIPELINE_BC_NAME)" -e bitcode,h target=webassembly-32-os_unknown-no_runtime
 	@ # Note that compiles to module that imports memory:
 	$(LLVM_LIB)/build/bin/llc -march=wasm32 -filetype=obj $(HALIDE_PIPELINE_BC) -o $(HALIDE_PIPELINE_OBJ)
 	$(LLVM_LIB)/build/bin/wasm-ld $(HALIDE_PIPELINE_OBJ) --allow-undefined --no-entry --import-memory -o $(HALIDE_PIPELINE_WASM)

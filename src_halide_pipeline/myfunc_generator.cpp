@@ -1,24 +1,20 @@
 #include "Halide.h"
 #include <iostream>
 
-int main(int argc, char **argv) {
-    if(argc != 2) {
-        std::cout << "Usage: myfunc_generator [output_file_path]" << std::endl;
-        return -1;
+class MyFuncGenerator: public Halide::Generator<MyFuncGenerator>
+{
+public:
+    // Note: Input and Output are defined in Halide.h, but have no Halide
+    // namespace prefix:
+    Input<Halide::Buffer<uint8_t>> input{"input", 2};
+    Output<Halide::Buffer<uint8_t>> myfunc{"myfunc", 2};
+
+    void generate()
+    {
+        Halide::Var x{"x"}, y{"y"};
+
+        myfunc(x, y) = 255 - input(x, y);
     }
+};
 
-    Halide::Target target = Halide::Target("webassembly-32-os_unknown-no_runtime");
-
-    Halide::Func myfunc("myfunc");
-    Halide::Var x("x"), y("y");
-    Halide::ImageParam input(Halide::UInt(8), 2);
-
-    myfunc(x, y) = 255 - input(x, y);
-
-    myfunc.compile_to_bitcode(argv[1], {input}, target);
-
-    // For reference, to view expected arguments and return type:
-    // myfunc.compile_to_header("myfunc.h", {input});
-
-    return 0;
-}
+HALIDE_REGISTER_GENERATOR(MyFuncGenerator, myfunc);
