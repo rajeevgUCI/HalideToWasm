@@ -1,4 +1,4 @@
-function halide_myfunc(Module, halideBufInput, halideBufOutput, width, height, doneCallback) {
+function halide_myfunc(Module, halideBufInput, filterBufPtr, biasBufPtr, halideBufOutput, width, height, doneCallback) {
     Module.print("In JS");
 
     Module.print(`halideBufInput address = 0x${halideBufInput.toString(16)}`);
@@ -19,7 +19,7 @@ function halide_myfunc(Module, halideBufInput, halideBufOutput, width, height, d
     let halideBufInputDataBytePtr = get_halide_buffer_data(halideBufInput);
     Module.print(`halideBufInput data address = 0x${halideBufInputDataBytePtr.toString(16)}`);
     Module.print('halideBufInput data in wasm memory:');
-    Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufInputDataBytePtr, halideBufInputDataBytePtr + width * height));
+    Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufInputDataBytePtr / 4, halideBufInputDataBytePtr / 4 + width * height));
 
     WebAssembly.instantiateStreaming(fetch('bin/myfunc.wasm'), {
         env: {
@@ -36,11 +36,11 @@ function halide_myfunc(Module, halideBufInput, halideBufOutput, width, height, d
         }
     })
     .then(myFuncWasm => {
-        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, halideBufOutput);
+        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasBufPtr, halideBufOutput);
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
         Module.print('halideBufOutput data in wasm memory:');
-        Module.print(new Uint8Array(Module.wasmMemory.buffer).slice(halideBufOutputDataBytePtr, halideBufOutputDataBytePtr + width * height));
+        Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufOutputDataBytePtr / 4, halideBufOutputDataBytePtr / 4 + width * height));
 
         doneCallback();
     });
@@ -80,6 +80,16 @@ function convertGrayscaleArrayToImageData(grayscaleUint8ClampedArray, width, hei
     return new ImageData(rgbaArray, width, height);
 }
 
+// Copies argument TypedArray into heap. Returns byte pointer to the array in
+// the heap.
+function copyTypedArrayToHeap(typedArray) {
+    let heapBytePtr = Module._malloc(typedArray.byteLength);
+    // Since heapBytePtr is an address into 8-bit memory, have to copy Uint8
+    // view of typedArray's underlying buffer:
+    Module.HEAPU8.set(new Uint8Array(typedArray.buffer), heapBytePtr);
+    return heapBytePtr;
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
@@ -96,17 +106,27 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             srcCtx.putImageData(srcImageData, 0, 0);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
-            let srcArrayHeapBytePtr = Module._malloc(srcArray.length * srcArray.BYTES_PER_ELEMENT);
-            Module.HEAPU8.set(srcArray, srcArrayHeapBytePtr);
+            let create_halide_buffer_1d = Module.cwrap('create_halide_buffer_1d', 'number', ['number', 'number']);
+            srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
+            let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
-            let outArrayHeapBytePtr = Module._malloc(srcArray.length * srcArray.BYTES_PER_ELEMENT);
+            let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
+            let filterHeapPtr = copyTypedArrayToHeap(filterArray);
+            let filterBufPtr = create_halide_buffer(filterHeapPtr, 3, 3);
+            let biasArray = new Int32Array([0]);
+            let biasHeapPtr = copyTypedArrayToHeap(biasArray);
+            let biasBufPtr = create_halide_buffer_1d(biasHeapPtr, 1);
+            let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
-            halide_myfunc(Module, halideBufInputPtr, halideBufOutputPtr, width, height, () => {
-                let outArray = Module.HEAPU8.slice(outArrayHeapBytePtr, outArrayHeapBytePtr + width * height);
+            halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasBufPtr, halideBufOutputPtr, width, height, () => {
+                let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
                 console.log('outArray:');
                 console.log(outArray);
+                // myfunc produces Int32Array with values between [0, 255], so
+                // outArray values can be directly copied to Uint8ClampedArray:
+                outArray = new Uint8ClampedArray(outArray);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
                 outCtx.putImageData(outImageData, 0, 0);
             });

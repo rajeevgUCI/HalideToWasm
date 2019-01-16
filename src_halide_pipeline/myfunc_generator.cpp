@@ -1,19 +1,38 @@
 #include "Halide.h"
 
-class MyFuncGenerator: public Halide::Generator<MyFuncGenerator>
-{
+namespace {
+
+using namespace Halide;
+
+class ConvolutionLayer : public Halide::Generator<ConvolutionLayer> {
 public:
-    // Note: Input and Output are defined in Halide.h, but have no Halide
-    // namespace prefix:
-    Input<Halide::Buffer<uint8_t>> input{"input", 2};
-    Output<Halide::Buffer<uint8_t>> myfunc{"myfunc", 2};
+    Input<Buffer<int32_t>>  input{"input", 4};
+    Input<Buffer<int32_t>>  filter{"filter", 4};
+    Input<Buffer<int32_t>>  bias{"bias", 1};
 
-    void generate()
-    {
-        Halide::Var x{"x"}, y{"y"};
+    Output<Buffer<int32_t>> output{"output", 4};
 
-        myfunc(x, y) = 255 - input(x, y);
-    }
+    void generate() {
+        /* THE ALGORITHM */
+
+        Var x("x"), y("y"), z("z"), n("n");
+
+        Func input_padded = BoundaryConditions::constant_exterior(input, 0);
+
+        RDom r(filter.dim(0).min(), filter.dim(0).extent(),
+               filter.dim(1).min(), filter.dim(1).extent(),
+               filter.dim(2).min(), filter.dim(2).extent());
+        Func f_conv("conv");
+        f_conv(x, y, z, n) = bias(z);
+        f_conv(x, y, z, n) += filter(r.x, r.y, r.z, z) * input_padded(x + r.x, y + r.y, r.z, n);
+
+        Func f_clamped("clamped");
+        f_clamped(x, y, z, n) = clamp(f_conv(x, y, z, n), 0, 255);
+
+        output(x, y, z, n) = f_clamped(x, y, z, n);
+   }
 };
 
-HALIDE_REGISTER_GENERATOR(MyFuncGenerator, myfunc);
+}  // namespace
+
+HALIDE_REGISTER_GENERATOR(ConvolutionLayer, myfunc)
