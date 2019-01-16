@@ -1,5 +1,4 @@
 #include "Halide.h"
-#include <iostream>
 
 class MyFuncGenerator: public Halide::Generator<MyFuncGenerator>
 {
