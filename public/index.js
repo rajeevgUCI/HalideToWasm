@@ -89,26 +89,25 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             const width = 512;
             const height = 512;
             let srcImageData = getImageData(img, width, height);
-
-            let srcImageDataRed = getRedChannelUint8ClampedArray(srcImageData);
-            console.log('srcImageDataRed:');
-            console.log(srcImageDataRed);
-            srcImageData = convertGrayscaleArrayToImageData(srcImageDataRed, width, height);
+            let srcArray = getRedChannelUint8ClampedArray(srcImageData);
+            console.log('srcArray:');
+            console.log(srcArray);
+            srcImageData = convertGrayscaleArrayToImageData(srcArray, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
-            let dataSrcHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
-            Module.HEAPU8.set(srcImageDataRed, dataSrcHeapBytePtr);
-            console.log(`dataSrcHeapBytePtr = 0x${dataSrcHeapBytePtr.toString(16)}`);
-            let halideBufInputPtr = create_halide_buffer(dataSrcHeapBytePtr, width, height);
-            let dataOutputHeapBytePtr = Module._malloc(srcImageDataRed.length * srcImageDataRed.BYTES_PER_ELEMENT);
-            let halideBufOutputPtr = create_halide_buffer(dataOutputHeapBytePtr, width, height);
+            let srcArrayHeapBytePtr = Module._malloc(srcArray.length * srcArray.BYTES_PER_ELEMENT);
+            Module.HEAPU8.set(srcArray, srcArrayHeapBytePtr);
+            console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
+            let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
+            let outArrayHeapBytePtr = Module._malloc(srcArray.length * srcArray.BYTES_PER_ELEMENT);
+            let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
             halide_myfunc(Module, halideBufInputPtr, halideBufOutputPtr, width, height, () => {
-                let outImageDataRed = Module.HEAPU8.slice(dataOutputHeapBytePtr, dataOutputHeapBytePtr + width * height);
-                let outImageData = convertGrayscaleArrayToImageData(outImageDataRed, width, height);
-                console.log('outImageData:');
-                console.log(outImageData);
+                let outArray = Module.HEAPU8.slice(outArrayHeapBytePtr, outArrayHeapBytePtr + width * height);
+                console.log('outArray:');
+                console.log(outArray);
+                let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
                 outCtx.putImageData(outImageData, 0, 0);
             });
 
