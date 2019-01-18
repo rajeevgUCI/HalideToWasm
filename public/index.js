@@ -67,6 +67,19 @@ function getRedChannelUint8ClampedArray(imageData) {
     return redChannel;
 }
 
+// Returns ImageData corresponding to grayscale image specified by arguments.
+function convertGrayscaleArrayToImageData(grayscaleUint8ClampedArray, width, height) {
+    let rgbaArray = new Uint8ClampedArray(grayscaleUint8ClampedArray.length * 4);
+    for(let i = 0; i < grayscaleUint8ClampedArray.length; i++) {
+        rgbaArray[4 * i] = grayscaleUint8ClampedArray[i];
+        rgbaArray[4 * i + 1] = grayscaleUint8ClampedArray[i];
+        rgbaArray[4 * i + 2] = grayscaleUint8ClampedArray[i];
+        rgbaArray[4 * i + 3] = 255; // alpha set to opaque
+    }
+
+    return new ImageData(rgbaArray, width, height);
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
@@ -80,15 +93,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             let srcImageDataRed = getRedChannelUint8ClampedArray(srcImageData);
             console.log('srcImageDataRed:');
             console.log(srcImageDataRed);
-            let srcImageDataArray = new Uint8ClampedArray(srcImageData.data);
-            // Set red, green, and blue channel to srcImageDataRed:
-            for(let i = 0; i < srcImageDataRed.length; i++)
-            {
-                srcImageDataArray[4 * i] = srcImageDataRed[i];
-                srcImageDataArray[4 * i + 1] = srcImageDataRed[i];
-                srcImageDataArray[4 * i + 2] = srcImageDataRed[i];
-            }
-            srcImageData = new ImageData(srcImageDataArray, width, height);
+            srcImageData = convertGrayscaleArrayToImageData(srcImageDataRed, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
@@ -101,15 +106,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             halide_myfunc(Module, halideBufInputPtr, halideBufOutputPtr, width, height, () => {
                 let outImageDataRed = Module.HEAPU8.slice(dataOutputHeapBytePtr, dataOutputHeapBytePtr + width * height);
-                let outImageDataArray = new Uint8ClampedArray(srcImageData.data);
-                // Set red, green, and blue channel to outImageDatRed:
-                for(let i = 0; i < outImageDataRed.length; i++)
-                {
-                    outImageDataArray[4 * i] = outImageDataRed[i];
-                    outImageDataArray[4 * i + 1] = outImageDataRed[i];
-                    outImageDataArray[4 * i + 2] = outImageDataRed[i];
-                }
-                let outImageData = new ImageData(outImageDataArray, width, height);
+                let outImageData = convertGrayscaleArrayToImageData(outImageDataRed, width, height);
                 console.log('outImageData:');
                 console.log(outImageData);
                 outCtx.putImageData(outImageData, 0, 0);
