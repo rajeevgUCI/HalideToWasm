@@ -46,6 +46,18 @@ function halide_myfunc(Module, halideBufInput, halideBufOutput, width, height, d
     });
 }
 
+// Scales Image img to [scaledWidth, scaledHeight], converts it to ImageData,
+// and returns ImageData object.
+function getImageData(img, scaledWidth, scaledHeight) {
+    // HACK: get image array by drawing to in-memory canvas:
+    let canvas = document.createElement('canvas');
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    let ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
+    return ctx.getImageData(0, 0, scaledWidth, scaledHeight);
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
@@ -54,9 +66,8 @@ var Module = { // Note: have to use var rather than let, for compatability with 
         img.addEventListener('load', () => {
             const width = 512;
             const height = 512;
-            // HACK: get image array by drawing to canvas:
-            srcCtx.drawImage(img, 0, 0, width, height);
-            let srcImageData = srcCtx.getImageData(0, 0, width, height);
+            let srcImageData = getImageData(img, width, height);
+
             let srcImageDataRed = new Uint8Array(width * height);
             // Set to red channel:
             for(let i = 0; i < srcImageDataRed.length; i++)
