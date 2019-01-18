@@ -58,6 +58,15 @@ function getImageData(img, scaledWidth, scaledHeight) {
     return ctx.getImageData(0, 0, scaledWidth, scaledHeight);
 }
 
+// Returns Uint8Array for red channel of ImageData parametetr.
+function getRedChannelUint8Array(imageData, width, height) {
+    let redChannel = new Uint8Array(width * height);
+    for(let i = 0; i < redChannel.length; i++) {
+        redChannel[i] = imageData.data[i * 4];
+    }
+    return redChannel;
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
@@ -68,12 +77,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             const height = 512;
             let srcImageData = getImageData(img, width, height);
 
-            let srcImageDataRed = new Uint8Array(width * height);
-            // Set to red channel:
-            for(let i = 0; i < srcImageDataRed.length; i++)
-            {
-                srcImageDataRed[i] = srcImageData.data[i * 4];
-            }
+            let srcImageDataRed = getRedChannelUint8Array(srcImageData, width, height);
             console.log('srcImageDataRed:');
             console.log(srcImageDataRed);
             let srcImageDataArray = new Uint8ClampedArray(srcImageData.data);
