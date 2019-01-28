@@ -1,13 +1,10 @@
 #include "Halide.h"
 
 #define conv_with_suffix(i, j) \
-    RDom r_##i(filter.dim(0).min(), filter.dim(0).extent(), \
-               filter.dim(1).min(), filter.dim(1).extent(), \
-               filter.dim(2).min(), filter.dim(2).extent()); \
     Func f_conv_##i; \
     f_conv_##i(x, y, z, n) = bias(z); \
-    f_conv_##i(x, y, z, n) += filter(r_##i.x, r_##i.y, r_##i.z, z) \
-                              * f_conv_##j(x + r_##i.x, y + r_##i.y, r_##i.z, n);
+    f_conv_##i(x, y, z, n) += filter(r.x, r.y, r.z, z) \
+                              * f_conv_##j(x + r.x, y + r.y, r.z, n);
 
 namespace {
 
@@ -28,6 +25,10 @@ public:
 
         Func f_conv_0;
         f_conv_0(x, y, z, n) = input_padded(x, y, z, n);
+
+        RDom r(filter.dim(0).min(), filter.dim(0).extent(),
+               filter.dim(1).min(), filter.dim(1).extent(),
+               filter.dim(2).min(), filter.dim(2).extent());
 
         // Use macro to generate a pipeline of convolution operations:
         conv_with_suffix(1, 0)
