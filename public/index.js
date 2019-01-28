@@ -36,6 +36,7 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasBufPtr, halideB
         }
     })
     .then(myFuncWasm => {
+        console.log('loaded wasm');
         let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasBufPtr, halideBufOutput);
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
@@ -90,10 +91,90 @@ function copyTypedArrayToHeap(typedArray) {
     return heapBytePtr;
 }
 
+function myfuncJS(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches,
+                    filterTypedArray, filterWidth, filterHeight, filterChannels,
+                    biasTypedArray, outputTypedArray) {
+    function getIndex(array, width, height, channels, batches, x, y, z, n, isPadded) {
+        return width * height * channels * n + width * height * z + width * y + x;
+    }
+    function getValue(array, width, height, channels, batches, x, y, z, n, isPadded) {
+        let idx = getIndex(array, width, height, channels, batches, x, y, z, n, isPadded);
+        if(isPadded && (x < 0 || x >= width || y < 0 || y >= height
+                        || z < 0 || z >= channels || n < 0 || n >= batches))
+            return 0; // zero padded
+        return array[idx];
+    }
+    function setValue(array, width, height, channels, batches, x, y, z, n, value) {
+        array[getIndex(array, width, height, channels, batches, x, y, z, n)] = value;
+    }
+    function forEachInputIndex(f) {
+        for(let n = 0; n < inputBatches; n++) {
+            for(let z = 0; z < inputChannels; z++) {
+                for(let y = 0; y < inputHeight; y++) {
+                    for(let x = 0; x < inputWidth; x++) {
+                        f(x, y, z, n);
+                    }
+                }
+            }
+        }
+    }
+    function convolve(inputTypedArray, outputTypedArray) {
+        forEachInputIndex((x, y, z, n) => {
+            let val = biasTypedArray[z];
+            for(let rDomZ = 0; rDomZ < filterChannels; rDomZ++) {
+                for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
+                    for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
+                        let filterVal = getValue(filterTypedArray, filterWidth, filterHeight, filterChannels, 1, rDomX, rDomY, rDomZ, z, false);
+                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x + rDomX, y + rDomY, z + rDomZ, n, true);
+                        val += biasTypedArray[z] + filterVal * inputVal;
+                    }
+                }
+            }
+            setValue(outputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, val);
+        });
+    }
+    function clamp(inputTypedArray, outputTypedArray, minValue, maxValue) {
+        forEachInputIndex((x, y, z, n) => {
+            let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, false);
+            let val = Math.min(Math.max(inputVal, minValue), maxValue);
+            setValue(outputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, val);
+        });
+    }
+
+    // let intermediate1 = new Int32Array(inputTypedArray);
+    // convolve(inputTypedArray, intermediate1);
+    // let intermediate2 = new Int32Array(inputTypedArray.length);
+    // convolve(intermediate1, intermediate2);
+    // intermediate1 = intermediate2;
+    // intermediate2 = new Int32Array(inputTypedArray.length);
+    // convolve(intermediate1, intermediate2);
+    // intermediate1 = intermediate2;
+    // intermediate2 = new Int32Array(inputTypedArray.length);
+    // convolve(intermediate1, intermediate2);
+    // clamp(intermediate2, outputTypedArray, 0, 255);
+    let intermediate1 = new Int32Array(inputTypedArray);
+    let intermediate2 = new Int32Array(inputTypedArray.length);
+    convolve(intermediate1, intermediate2);
+    intermediate1 = new Int32Array(intermediate2);
+    intermediate2 = new Int32Array(inputTypedArray.length);
+    convolve(intermediate1, intermediate2);
+    intermediate1 = new Int32Array(intermediate2);
+    intermediate2 = new Int32Array(inputTypedArray.length);
+    convolve(intermediate1, intermediate2);
+    intermediate1 = new Int32Array(intermediate2);
+    intermediate2 = new Int32Array(inputTypedArray.length);
+    convolve(intermediate1, intermediate2);
+    intermediate1 = new Int32Array(intermediate2);
+    intermediate2 = new Int32Array(inputTypedArray.length);
+    clamp(intermediate1, intermediate2, 0, 255);
+    outputTypedArray.set(intermediate2);
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
         let outCtx = document.getElementById('canvas-image-out').getContext('2d');
+        let outCtx2 = document.getElementById('canvas-image-out-2').getContext('2d');
         let img = new Image();
         img.addEventListener('load', () => {
             const width = 512;
@@ -105,22 +186,31 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             srcImageData = convertGrayscaleArrayToImageData(srcArray, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
 
+            srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
+            let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
+            let biasArray = new Int32Array([0]);
+
+            let outArrayJS = new Int32Array(srcArray.length);
+            myfuncJS(srcArray, width, height, 1, 1, filterArray, 3, 3, 1, biasArray, outArrayJS);
+            outArrayJS = new Uint8ClampedArray(outArrayJS);
+            let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
+            outCtx2.putImageData(outImageDataJS, 0, 0);
+
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
             let create_halide_buffer_1d = Module.cwrap('create_halide_buffer_1d', 'number', ['number', 'number']);
-            srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
-            let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
             let filterBufPtr = create_halide_buffer(filterHeapPtr, 3, 3);
-            let biasArray = new Int32Array([0]);
             let biasHeapPtr = copyTypedArrayToHeap(biasArray);
             let biasBufPtr = create_halide_buffer_1d(biasHeapPtr, 1);
             let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
+            console.log('Running Halide myfunc...');
             halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasBufPtr, halideBufOutputPtr, width, height, () => {
+                console.log('Done running Halide myfunc.');
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
                 console.log('outArray:');
                 console.log(outArray);
@@ -129,6 +219,8 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                 outArray = new Uint8ClampedArray(outArray);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
                 outCtx.putImageData(outImageData, 0, 0);
+
+                console.log(`all elements equal: ${outArray.every((v, i) => v == outArrayJS[i])}`);
             });
 
             // TODO: Module._free malloc'd data after demo is complete
