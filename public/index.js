@@ -125,8 +125,8 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight, inputChannels, input
                 for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
                     for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
                         let filterVal = getValue(filterTypedArray, filterWidth, filterHeight, filterChannels, 1, rDomX, rDomY, rDomZ, z, false);
-                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x + rDomX, y + rDomY, z + rDomZ, n, true);
-                        val += biasTypedArray[z] + filterVal * inputVal;
+                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x + rDomX, y + rDomY, rDomZ, n, true);
+                        val += filterVal * inputVal;
                     }
                 }
             }
@@ -188,7 +188,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
-            let biasArray = new Int32Array([0]);
+            let biasArray = new Int32Array([10]);
 
             let outArrayJS = new Int32Array(srcArray.length);
             myfuncJS(srcArray, width, height, 1, 1, filterArray, 3, 3, 1, biasArray, outArrayJS);
