@@ -17,8 +17,6 @@ halide_buffer_t *create_halide_buffer(int32_t *data, int width, int height)
     halide_buffer_t *halide_buf = halide_buf_wrapper->raw_buffer();
     std::cout << "halide_buf address = " << halide_buf << std::endl;
 
-    int32_t *halide_data = get_halide_buffer_data(halide_buf);
-
     return halide_buf;
 
     // TODO: free halide_buf_wrapper. This will perhaps require a callback.
