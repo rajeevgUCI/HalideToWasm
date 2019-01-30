@@ -184,20 +184,25 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
+            const filterWidth = 3;
+            const filterHeight = 3;
             let biasInt = 10;
 
             let outArrayJS = new Int32Array(srcArray.length);
-            myfuncJS(srcArray, width, height, filterArray, 3, 3, biasInt, outArrayJS);
+            myfuncJS(srcArray, width, height, filterArray, filterWidth, filterHeight,
+                        biasInt, outArrayJS);
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
             outCtx2.putImageData(outImageDataJS, 0, 0);
+            console.log('outArrayJS:');
+            console.log(outArrayJS);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
-            let filterBufPtr = create_halide_buffer(filterHeapPtr, 3, 3);
+            let filterBufPtr = create_halide_buffer(filterHeapPtr, filterWidth, filterHeight);
             let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
@@ -205,13 +210,13 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasInt, halideBufOutputPtr, width, height, () => {
                 console.log('Done running Halide myfunc.');
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
-                console.log('outArray:');
-                console.log(outArray);
                 // myfunc produces Int32Array with values between [0, 255], so
                 // outArray values can be directly copied to Uint8ClampedArray:
                 outArray = new Uint8ClampedArray(outArray);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
                 outCtx.putImageData(outImageData, 0, 0);
+                console.log('outArray:');
+                console.log(outArray);
 
                 console.log(`all elements equal: ${outArray.every((v, i) => v == outArrayJS[i])}`);
             });
