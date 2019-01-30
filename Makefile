@@ -5,7 +5,7 @@ PUBLIC_BIN_DIR = public/bin
 EMSCRIPTEN_SRC_DIR = src_emscripten
 EMSCRIPTEN_SRC_CPP = $(wildcard $(EMSCRIPTEN_SRC_DIR)/*.cpp)
 EMSCRIPTEN_OUT_JS = $(PUBLIC_BIN_DIR)/emscripten-halide.js
-EMSCRIPTEN_EXPORTED_FNS = '["_create_halide_buffer", "_create_halide_buffer_1d", "_custom_halide_error_buffer_argument_is_null", "_custom_halide_error_bad_type", "_custom_halide_error_access_out_of_bounds", "_custom_halide_error_bad_dimensions", "_custom_halide_error_buffer_extents_negative", "_custom_halide_error_constraint_violated", "_custom_halide_error_buffer_allocation_too_large", "_custom_halide_error_buffer_extents_too_large", "_custom_halide_error_host_is_null", "_get_halide_buffer_data"]'
+EMSCRIPTEN_EXPORTED_FNS = '["_create_halide_buffer", "_custom_halide_error_buffer_argument_is_null", "_custom_halide_error_bad_type", "_custom_halide_error_access_out_of_bounds", "_custom_halide_error_bad_dimensions", "_custom_halide_error_buffer_extents_negative", "_custom_halide_error_constraint_violated", "_custom_halide_error_buffer_allocation_too_large", "_custom_halide_error_buffer_extents_too_large", "_custom_halide_error_host_is_null", "_get_halide_buffer_data"]'
 EMSCRIPTEN_EXTRA_EXPORTED_RUNTIME_METHODS = '["cwrap", "print", "printErr"]'
 
 HALIDE_PIPELINE_BIN_DIR = bin_halide_pipeline

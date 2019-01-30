@@ -1,4 +1,4 @@
-function halide_myfunc(Module, halideBufInput, filterBufPtr, biasBufPtr, halideBufOutput, width, height, doneCallback) {
+function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufOutput, width, height, doneCallback) {
     Module.print("In JS");
 
     Module.print(`halideBufInput address = 0x${halideBufInput.toString(16)}`);
@@ -37,7 +37,7 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasBufPtr, halideB
     })
     .then(myFuncWasm => {
         console.log('loaded wasm');
-        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasBufPtr, halideBufOutput);
+        let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasInt, halideBufOutput);
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
         Module.print('halideBufOutput data in wasm memory:');
@@ -91,53 +91,49 @@ function copyTypedArrayToHeap(typedArray) {
     return heapBytePtr;
 }
 
-function myfuncJS(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches,
-                    filterTypedArray, filterWidth, filterHeight, filterChannels,
-                    biasTypedArray, outputTypedArray) {
-    function getIndex(array, width, height, channels, batches, x, y, z, n, isPadded) {
-        return width * height * channels * n + width * height * z + width * y + x;
+function myfuncJS(inputTypedArray, inputWidth, inputHeight,
+                    filterTypedArray, filterWidth, filterHeight,
+                    biasInt, outputTypedArray) {
+    function getIndex(array, width, height, x, y) {
+        return width * y + x;
     }
-    function getValue(array, width, height, channels, batches, x, y, z, n, isPadded) {
-        let idx = getIndex(array, width, height, channels, batches, x, y, z, n, isPadded);
-        if(isPadded && (x < 0 || x >= width || y < 0 || y >= height
-                        || z < 0 || z >= channels || n < 0 || n >= batches))
+    function getValue(array, width, height, x, y, isPadded) {
+        let idx = getIndex(array, width, height, x, y);
+        if(isPadded && (x < 0 || x >= width || y < 0 || y >= height))
             return 0; // zero padded
+        // else if not isPadded, will return undefined when index out of bounds:
         return array[idx];
     }
-    function setValue(array, width, height, channels, batches, x, y, z, n, value) {
-        array[getIndex(array, width, height, channels, batches, x, y, z, n)] = value;
+    function setValue(array, width, height, x, y, value) {
+        array[getIndex(array, width, height, x, y)] = value;
     }
     function forEachInputIndex(f) {
-        for(let n = 0; n < inputBatches; n++) {
-            for(let z = 0; z < inputChannels; z++) {
-                for(let y = 0; y < inputHeight; y++) {
-                    for(let x = 0; x < inputWidth; x++) {
-                        f(x, y, z, n);
-                    }
-                }
+        for(let y = 0; y < inputHeight; y++) {
+            for(let x = 0; x < inputWidth; x++) {
+                f(x, y);
             }
         }
     }
     function convolve(inputTypedArray, outputTypedArray) {
-        forEachInputIndex((x, y, z, n) => {
-            let val = biasTypedArray[z];
-            for(let rDomZ = 0; rDomZ < filterChannels; rDomZ++) {
-                for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
-                    for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
-                        let filterVal = getValue(filterTypedArray, filterWidth, filterHeight, filterChannels, 1, rDomX, rDomY, rDomZ, z, false);
-                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x + rDomX, y + rDomY, rDomZ, n, true);
-                        val += filterVal * inputVal;
-                    }
+        forEachInputIndex((x, y) => {
+            let val = biasInt;
+            for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
+                for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
+                    let filterVal = getValue(filterTypedArray, filterWidth, filterHeight,
+                                                rDomX, rDomY, false);
+                    let inputVal = getValue(inputTypedArray, inputWidth, inputHeight,
+                                            x + rDomX, y + rDomY, true);
+                    val += filterVal * inputVal;
                 }
             }
-            setValue(outputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, val);
+            setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
         });
     }
     function clamp(inputTypedArray, outputTypedArray, minValue, maxValue) {
-        forEachInputIndex((x, y, z, n) => {
-            let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, false);
+        forEachInputIndex((x, y) => {
+            let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, x, y, false);
             let val = Math.min(Math.max(inputVal, minValue), maxValue);
-            setValue(outputTypedArray, inputWidth, inputHeight, inputChannels, inputBatches, x, y, z, n, val);
+            setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
         });
     }
 
@@ -188,28 +184,25 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
-            let biasArray = new Int32Array([10]);
+            let biasInt = 10;
 
             let outArrayJS = new Int32Array(srcArray.length);
-            myfuncJS(srcArray, width, height, 1, 1, filterArray, 3, 3, 1, biasArray, outArrayJS);
+            myfuncJS(srcArray, width, height, filterArray, 3, 3, biasInt, outArrayJS);
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
             outCtx2.putImageData(outImageDataJS, 0, 0);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
-            let create_halide_buffer_1d = Module.cwrap('create_halide_buffer_1d', 'number', ['number', 'number']);
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
             let filterBufPtr = create_halide_buffer(filterHeapPtr, 3, 3);
-            let biasHeapPtr = copyTypedArrayToHeap(biasArray);
-            let biasBufPtr = create_halide_buffer_1d(biasHeapPtr, 1);
             let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
             console.log('Running Halide myfunc...');
-            halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasBufPtr, halideBufOutputPtr, width, height, () => {
+            halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasInt, halideBufOutputPtr, width, height, () => {
                 console.log('Done running Halide myfunc.');
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
                 console.log('outArray:');

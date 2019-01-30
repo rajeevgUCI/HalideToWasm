@@ -11,7 +11,6 @@ extern "C"
 {
 
 halide_buffer_t *create_halide_buffer(int32_t *data, int width, int height);
-halide_buffer_t *create_halide_buffer_1d(int32_t *data, int n);
 int32_t *get_halide_buffer_data(halide_buffer_t *halide_buf);
 
 }
