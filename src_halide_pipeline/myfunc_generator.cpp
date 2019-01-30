@@ -3,7 +3,10 @@
 #define conv_with_suffix(i, j) \
     Func f_conv_##i; \
     f_conv_##i(x, y) = bias; \
-    f_conv_##i(x, y) += filter(r.x, r.y) * f_conv_##j(x + r.x, y + r.y);
+    f_conv_##i(x, y) += filter(r.x, r.y) * f_conv_##j(x + r.x, y + r.y); \
+    f_conv_##i = BoundaryConditions::constant_exterior(f_conv_##i, 0, \
+                    {{input.dim(0).min(), input.dim(0).extent()}, \
+                    {input.dim(1).min(), input.dim(1).extent()}});
 
 namespace {
 
@@ -20,10 +23,11 @@ public:
     void generate() {
         Var x("x"), y("y");
 
-        Func input_padded = BoundaryConditions::constant_exterior(input, 0);
-
         Func f_conv_0;
-        f_conv_0(x, y) = input_padded(x, y);
+        f_conv_0(x, y) = input(x, y);
+        f_conv_0 = BoundaryConditions::constant_exterior(f_conv_0, 0,
+                    {{input.dim(0).min(), input.dim(0).extent()},
+                    {input.dim(1).min(), input.dim(1).extent()}});
 
         RDom r(filter.dim(0).min(), filter.dim(0).extent(),
                filter.dim(1).min(), filter.dim(1).extent());
