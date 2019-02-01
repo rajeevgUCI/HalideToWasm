@@ -99,8 +99,14 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
     }
     function getValue(array, width, height, x, y, isPadded) {
         let idx = getIndex(array, width, height, x, y);
-        if(isPadded && (x < 0 || x >= width || y < 0 || y >= height))
-            return 0; // zero padded
+        if(x < 0 || x >= width || y < 0 || y >= height) {
+            if(isPadded) {
+                return 0; // zero-padded
+            }
+            else {
+                throw new Error("getValue: index out of bounds and not padded");
+            }
+        }
         // else if not isPadded, will return undefined when index out of bounds:
         return array[idx];
     }
