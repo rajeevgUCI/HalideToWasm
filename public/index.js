@@ -155,9 +155,9 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
-        let outCtx = document.getElementById('canvas-image-out').getContext('2d');
-        let outCtx2 = document.getElementById('canvas-image-out-2').getContext('2d');
-        let outCtx3 = document.getElementById('canvas-image-out-3').getContext('2d');
+        let outJsCtx = document.getElementById('canvas-image-out-js').getContext('2d');
+        let outCppCtx = document.getElementById('canvas-image-out-cpp').getContext('2d');
+        let outHalideCtx = document.getElementById('canvas-image-out-halide').getContext('2d');
         let img = new Image();
         img.addEventListener('load', () => {
             const width = 512;
@@ -168,6 +168,8 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log(srcArray);
             srcImageData = convertGrayscaleArrayToImageData(srcArray, width, height);
             srcCtx.putImageData(srcImageData, 0, 0);
+            document.getElementById('src-loading').classList.add('hidden');
+            document.getElementById('canvas-image-src').classList.remove('hidden');
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
@@ -180,7 +182,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                         biasInt, outArrayJS);
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
-            outCtx2.putImageData(outImageDataJS, 0, 0);
+            outJsCtx.putImageData(outImageDataJS, 0, 0);
+            document.getElementById('out-js-loading').classList.add('hidden');
+            document.getElementById('canvas-image-out-js').classList.remove('hidden');
             console.log('outArrayJS:');
             console.log(outArrayJS);
 
@@ -198,7 +202,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log(outArrayCpp);
             console.log(`all elements equal: ${outArrayCpp.every((v, i) => v == outArrayJS[i])}`);
             let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
-            outCtx3.putImageData(outImageDataCpp, 0, 0);
+            outCppCtx.putImageData(outImageDataCpp, 0, 0);
+            document.getElementById('out-cpp-loading').classList.add('hidden');
+            document.getElementById('canvas-image-out-cpp').classList.remove('hidden');
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
@@ -214,7 +220,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                 // outArray values can be directly copied to Uint8ClampedArray:
                 outArray = new Uint8ClampedArray(outArray);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
-                outCtx.putImageData(outImageData, 0, 0);
+                outHalideCtx.putImageData(outImageData, 0, 0);
+                document.getElementById('out-halide-loading').classList.add('hidden');
+                document.getElementById('canvas-image-out-halide').classList.remove('hidden');
                 console.log('outArray:');
                 console.log(outArray);
 

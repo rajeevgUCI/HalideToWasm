@@ -1,0 +1,9 @@
+.hidden {
+    display: none;
+}
+
+.out-container {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
