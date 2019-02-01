@@ -157,6 +157,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
         let outCtx = document.getElementById('canvas-image-out').getContext('2d');
         let outCtx2 = document.getElementById('canvas-image-out-2').getContext('2d');
+        let outCtx3 = document.getElementById('canvas-image-out-3').getContext('2d');
         let img = new Image();
         img.addEventListener('load', () => {
             const width = 512;
@@ -183,11 +184,24 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log('outArrayJS:');
             console.log(outArrayJS);
 
-            let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
+            let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
-            let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
+            let outArrayCppHeapBytePtr = Module._malloc(srcArray.byteLength);
+            myfunc_cpp(srcArrayHeapBytePtr, width, height, filterHeapPtr, filterWidth, filterHeight, biasInt, outArrayCppHeapBytePtr);
+            let outArrayCpp = Module.HEAP32.slice(outArrayCppHeapBytePtr / 4, outArrayCppHeapBytePtr / 4 + width * height);
+            // myfunc_cpp produces Int32Array with values between [0, 255], so
+            // outArray values can be directly copied to Uint8ClampedArray:
+            outArrayCpp = new Uint8ClampedArray(outArrayCpp);
+            console.log('outArrayCpp:');
+            console.log(outArrayCpp);
+            console.log(`all elements equal: ${outArrayCpp.every((v, i) => v == outArrayJS[i])}`);
+            let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
+            outCtx3.putImageData(outImageDataCpp, 0, 0);
+
+            let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
+            let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
             let filterBufPtr = create_halide_buffer(filterHeapPtr, filterWidth, filterHeight);
             let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
