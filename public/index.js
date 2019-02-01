@@ -113,61 +113,41 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
     function setValue(array, width, height, x, y, value) {
         array[getIndex(array, width, height, x, y)] = value;
     }
-    function forEachInputIndex(f) {
+    function convolve(inputTypedArray, outputTypedArray) {
         for(let y = 0; y < inputHeight; y++) {
             for(let x = 0; x < inputWidth; x++) {
-                f(x, y);
+                let val = biasInt;
+                for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
+                    for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
+                        let filterVal = getValue(filterTypedArray, filterWidth, filterHeight,
+                                                    rDomX, rDomY, false);
+                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight,
+                                                x + rDomX, y + rDomY, true);
+                        val += filterVal * inputVal;
+                    }
+                }
+                setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
             }
         }
     }
-    function convolve(inputTypedArray, outputTypedArray) {
-        forEachInputIndex((x, y) => {
-            let val = biasInt;
-            for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
-                for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
-                    let filterVal = getValue(filterTypedArray, filterWidth, filterHeight,
-                                                rDomX, rDomY, false);
-                    let inputVal = getValue(inputTypedArray, inputWidth, inputHeight,
-                                            x + rDomX, y + rDomY, true);
-                    val += filterVal * inputVal;
-                }
-            }
-            setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
-        });
-    }
     function clamp(inputTypedArray, outputTypedArray, minValue, maxValue) {
-        forEachInputIndex((x, y) => {
-            let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, x, y, false);
-            let val = Math.min(Math.max(inputVal, minValue), maxValue);
-            setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
-        });
+        for(let y = 0; y < inputHeight; y++) {
+            for(let x = 0; x < inputWidth; x++) {
+                let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, x, y, false);
+                let val = Math.min(Math.max(inputVal, minValue), maxValue);
+                setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
+            }
+        }
     }
 
-    // let intermediate1 = new Int32Array(inputTypedArray);
-    // convolve(inputTypedArray, intermediate1);
-    // let intermediate2 = new Int32Array(inputTypedArray.length);
-    // convolve(intermediate1, intermediate2);
-    // intermediate1 = intermediate2;
-    // intermediate2 = new Int32Array(inputTypedArray.length);
-    // convolve(intermediate1, intermediate2);
-    // intermediate1 = intermediate2;
-    // intermediate2 = new Int32Array(inputTypedArray.length);
-    // convolve(intermediate1, intermediate2);
-    // clamp(intermediate2, outputTypedArray, 0, 255);
-    let intermediate1 = new Int32Array(inputTypedArray);
+    const NUM_CONVOLVES = 4;
+    let intermediate1 = inputTypedArray;
     let intermediate2 = new Int32Array(inputTypedArray.length);
-    convolve(intermediate1, intermediate2);
-    intermediate1 = new Int32Array(intermediate2);
-    intermediate2 = new Int32Array(inputTypedArray.length);
-    convolve(intermediate1, intermediate2);
-    intermediate1 = new Int32Array(intermediate2);
-    intermediate2 = new Int32Array(inputTypedArray.length);
-    convolve(intermediate1, intermediate2);
-    intermediate1 = new Int32Array(intermediate2);
-    intermediate2 = new Int32Array(inputTypedArray.length);
-    convolve(intermediate1, intermediate2);
-    intermediate1 = new Int32Array(intermediate2);
-    intermediate2 = new Int32Array(inputTypedArray.length);
+    for(let i = 0; i < NUM_CONVOLVES; i++) {
+        convolve(intermediate1, intermediate2);
+        intermediate1 = intermediate2;
+        intermediate2 = new Int32Array(inputTypedArray.length);
+    }
     clamp(intermediate1, intermediate2, 0, 255);
     outputTypedArray.set(intermediate2);
 }
