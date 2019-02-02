@@ -98,6 +98,8 @@ void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
     {
         output_array[i] = intermediate_2[i];
     }
+    delete[] intermediate_1;
+    delete[] intermediate_2;
 }
 
 }
