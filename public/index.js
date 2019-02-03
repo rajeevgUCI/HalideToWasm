@@ -45,7 +45,9 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
     })
     .then(myFuncWasm => {
         console.log('loaded wasm');
+        console.time("myfuncHalide");
         let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasInt, halideBufOutput);
+        console.timeEnd("myfuncHalide");
         Module.print(`myFunc return status: ${myFuncRetStatus}`);
         let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
         Module.print('halideBufOutput data in wasm memory:');
@@ -195,8 +197,10 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             let biasInt = 10;
 
             let outArrayJS = new Int32Array(srcArray.length);
+            console.time("myfuncJS");
             myfuncJS(srcArray, width, height, filterArray, filterWidth, filterHeight,
                         biasInt, outArrayJS);
+            console.timeEnd("myfuncJS");
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
             console.log('outArrayJS:');
@@ -209,7 +213,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
             let outArrayCppHeapBytePtr = Module._malloc(srcArray.byteLength);
+            console.time("myfunc_cpp");
             myfunc_cpp(srcArrayHeapBytePtr, width, height, filterHeapPtr, filterWidth, filterHeight, biasInt, outArrayCppHeapBytePtr);
+            console.timeEnd("myfunc_cpp");
             let outArrayCpp = Module.HEAP32.slice(outArrayCppHeapBytePtr / 4, outArrayCppHeapBytePtr / 4 + width * height);
             // myfunc_cpp produces Int32Array with values between [0, 255], so
             // Int32Array values can be directly copied to Uint8ClampedArray:
