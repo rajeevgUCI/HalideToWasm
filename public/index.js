@@ -148,7 +148,7 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
         }
     }
 
-    const NUM_CONVOLVES = 4;
+    const NUM_CONVOLVES = 10;
     let intermediate1 = inputTypedArray;
     let intermediate2 = new Int32Array(inputTypedArray.length);
     for(let i = 0; i < NUM_CONVOLVES; i++) {

@@ -79,7 +79,7 @@ void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
 {
     int32_t input_length = input_width * input_height;
 
-    const int32_t NUM_CONVOLVES = 4;
+    const int32_t NUM_CONVOLVES = 10;
     int32_t *intermediate_1 = new int32_t[input_length];
     for(int32_t i = 0; i < input_length; ++i)
     {
