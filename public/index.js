@@ -203,16 +203,19 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log(outArrayJS);
             drawAndShowCanvas(outJsCtx, 'canvas-image-out-js', 'out-js-loading', outImageDataJS);
 
-            let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
             console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
+
+            let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
             let outArrayCppHeapBytePtr = Module._malloc(srcArray.byteLength);
             myfunc_cpp(srcArrayHeapBytePtr, width, height, filterHeapPtr, filterWidth, filterHeight, biasInt, outArrayCppHeapBytePtr);
             let outArrayCpp = Module.HEAP32.slice(outArrayCppHeapBytePtr / 4, outArrayCppHeapBytePtr / 4 + width * height);
             // myfunc_cpp produces Int32Array with values between [0, 255], so
-            // outArray values can be directly copied to Uint8ClampedArray:
+            // Int32Array values can be directly copied to Uint8ClampedArray:
             outArrayCpp = new Uint8ClampedArray(outArrayCpp);
+            // Values have been copied, so can free original:
+            Module._free(outArrayCppHeapBytePtr);
             let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
             console.log('outArrayCpp:');
             console.log(outArrayCpp);
@@ -230,17 +233,20 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                 console.log('Done running Halide myfunc.');
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
                 // myfunc produces Int32Array with values between [0, 255], so
-                // outArray values can be directly copied to Uint8ClampedArray:
+                // Int32Array values can be directly copied to Uint8ClampedArray:
                 outArray = new Uint8ClampedArray(outArray);
+                // Values have been copied, so can free original:
+                Module._free(outArrayHeapBytePtr);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
                 console.log('outArray:');
                 console.log(outArray);
                 drawAndShowCanvas(outHalideCtx, 'canvas-image-out-halide', 'out-halide-loading', outImageData);
 
                 console.log(`all elements equal: ${outArray.every((v, i) => v == outArrayJS[i])}`);
-            });
 
-            // TODO: Module._free malloc'd data after demo is complete
+                Module._free(srcArrayHeapBytePtr);
+                Module._free(filterHeapPtr);
+            });
         });
         img.src = 'foden-truck.jpg';
     }
