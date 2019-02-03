@@ -160,6 +160,17 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
     outputTypedArray.set(intermediate2);
 }
 
+function drawAndShowCanvas(canvasCtx, canvasId, loadingId, imageData) {
+    let canvasElement = document.getElementById(canvasId);
+    // Need to set width and height of canvas (which are different from
+    // style.width and style.height set in css):
+    canvasElement.width = imageData.width;
+    canvasElement.height = imageData.height;
+    canvasCtx.putImageData(imageData, 0, 0);
+    document.getElementById(loadingId).classList.add('hidden');
+    canvasElement.classList.remove('hidden');
+}
+
 var Module = { // Note: have to use var rather than let, for compatability with emscripten
     onRuntimeInitialized: () => {
         let srcCtx = document.getElementById('canvas-image-src').getContext('2d');
@@ -175,9 +186,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.log('srcArray:');
             console.log(srcArray);
             srcImageData = convertGrayscaleArrayToImageData(srcArray, width, height);
-            srcCtx.putImageData(srcImageData, 0, 0);
-            document.getElementById('src-loading').classList.add('hidden');
-            document.getElementById('canvas-image-src').classList.remove('hidden');
+            drawAndShowCanvas(srcCtx, 'canvas-image-src', 'src-loading', srcImageData);
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
             let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
@@ -190,11 +199,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                         biasInt, outArrayJS);
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
-            outJsCtx.putImageData(outImageDataJS, 0, 0);
-            document.getElementById('out-js-loading').classList.add('hidden');
-            document.getElementById('canvas-image-out-js').classList.remove('hidden');
             console.log('outArrayJS:');
             console.log(outArrayJS);
+            drawAndShowCanvas(outJsCtx, 'canvas-image-out-js', 'out-js-loading', outImageDataJS);
 
             let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
@@ -206,13 +213,11 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             // myfunc_cpp produces Int32Array with values between [0, 255], so
             // outArray values can be directly copied to Uint8ClampedArray:
             outArrayCpp = new Uint8ClampedArray(outArrayCpp);
+            let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
             console.log('outArrayCpp:');
             console.log(outArrayCpp);
             console.log(`all elements equal: ${outArrayCpp.every((v, i) => v == outArrayJS[i])}`);
-            let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
-            outCppCtx.putImageData(outImageDataCpp, 0, 0);
-            document.getElementById('out-cpp-loading').classList.add('hidden');
-            document.getElementById('canvas-image-out-cpp').classList.remove('hidden');
+            drawAndShowCanvas(outCppCtx, 'canvas-image-out-cpp', 'out-cpp-loading', outImageDataCpp);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
             let halideBufInputPtr = create_halide_buffer(srcArrayHeapBytePtr, width, height);
@@ -228,11 +233,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                 // outArray values can be directly copied to Uint8ClampedArray:
                 outArray = new Uint8ClampedArray(outArray);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
-                outHalideCtx.putImageData(outImageData, 0, 0);
-                document.getElementById('out-halide-loading').classList.add('hidden');
-                document.getElementById('canvas-image-out-halide').classList.remove('hidden');
                 console.log('outArray:');
                 console.log(outArray);
+                drawAndShowCanvas(outHalideCtx, 'canvas-image-out-halide', 'out-halide-loading', outImageData);
 
                 console.log(`all elements equal: ${outArray.every((v, i) => v == outArrayJS[i])}`);
             });
