@@ -44,7 +44,12 @@ public:
         conv_with_suffix(7, 6)
         conv_with_suffix(8, 7)
         conv_with_suffix(9, 8)
-        conv_with_suffix(last, 9)
+        conv_with_suffix(10, 9)
+        conv_with_suffix(11, 10)
+        conv_with_suffix(12, 11)
+        conv_with_suffix(13, 12)
+        conv_with_suffix(14, 13)
+        conv_with_suffix(last, 14)
 
         Func f_clamped("clamped");
         f_clamped(x, y) = clamp(f_conv_last(x, y), 0, 255);
