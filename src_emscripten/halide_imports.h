@@ -8,6 +8,8 @@ extern "C"
 
 int custom_halide_error_buffer_argument_is_null(void *user_context, const char *buffer_name);
 
+void *custom_halide_malloc(void *user_context, size_t x);
+
 int custom_halide_error_bad_type(void *user_context, const char *func_name,
                                  uint8_t code_given, uint8_t correct_code,
                                  uint8_t bits_given, uint8_t correct_bits,
@@ -33,6 +35,10 @@ int custom_halide_error_buffer_extents_too_large(void *user_context, const char 
                                                  int64_t actual_size, int64_t max_size);
 
 int custom_halide_error_host_is_null(void *user_context, const char *func_name);
+
+int custom_halide_error_out_of_memory(void *user_context);
+
+void custom_halide_free(void *user_context, void *ptr);
 
 }
 

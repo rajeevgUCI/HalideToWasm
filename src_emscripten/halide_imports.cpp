@@ -2,13 +2,48 @@
 
 #include <iostream>
 
+// These implementations are based on the original implementations in the Halide
+// library.
+
 extern "C"
 {
+
+namespace
+{
+	int halide_malloc_alignment()
+    {
+        return 8;
+    }
+
+    void *halide_default_malloc(void *user_context, size_t x)
+    {
+        // Allocate enough space for aligning the pointer we return.
+        const size_t alignment = halide_malloc_alignment();
+        void *orig = malloc(x + alignment);
+        if (orig == NULL) {
+            // Will result in a failed assertion and a call to halide_error
+            return NULL;
+        }
+        // We want to store the original pointer prior to the pointer we return.
+        void *ptr = (void *)(((size_t)orig + alignment + sizeof(void*) - 1) & ~(alignment - 1));
+        ((void **)ptr)[-1] = orig;
+        return ptr;
+    }
+
+    void halide_default_free(void *user_context, void *ptr) {
+		free(((void**)ptr)[-1]);
+	}
+}
 
 int custom_halide_error_buffer_argument_is_null(void *user_context, const char *buffer_name)
 {
     std::cout << "custom_halide_error_buffer_argument_is_null: " << buffer_name << std::endl;
     return halide_error_code_buffer_argument_is_null;
+}
+
+void *custom_halide_malloc(void *user_context, size_t x)
+{
+    return halide_default_malloc(user_context, x);
 }
 
 int custom_halide_error_bad_type(void *user_context, const char *func_name,
@@ -99,6 +134,18 @@ int custom_halide_error_host_is_null(void *user_context, const char *func_name)
         << " is null, but the pipeline will access it on the host."
         << std::endl;
     return halide_error_code_host_is_null;
+}
+
+int custom_halide_error_out_of_memory(void *user_context)
+{
+    // The error message builder uses malloc, so we can't use it here.
+    std::cout << "Out of memory (halide_malloc returned NULL)" << std::endl;
+    return halide_error_code_out_of_memory;
+}
+
+void custom_halide_free(void *user_context, void *ptr)
+{
+    halide_default_free(user_context, ptr);
 }
 
 }

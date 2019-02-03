@@ -5,6 +5,8 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
     Module.print(`halideBufOutput address = 0x${halideBufOutput.toString(16)}`);
 
     let custom_halide_error_buffer_argument_is_null = Module.cwrap('custom_halide_error_buffer_argument_is_null', 'number', ['number', 'number']);
+    let custom_halide_malloc = Module.cwrap('custom_halide_malloc', null, ['number', 'number']);
+    let memset = Module.cwrap('memset', 'number', ['number', 'number', 'number']);
     let custom_halide_error_bad_type = Module.cwrap('custom_halide_error_bad_type', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
     let custom_halide_error_access_out_of_bounds = Module.cwrap('custom_halide_error_access_out_of_bounds', 'number', ['number', 'number', 'number', 'number', 'number', 'number', 'number']);
     let custom_halide_error_bad_dimensions = Module.cwrap('custom_halide_error_bad_dimensions', 'number', ['number', 'number', 'number', 'number']);
@@ -13,6 +15,8 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
     let custom_halide_error_buffer_allocation_too_large = Module.cwrap('custom_halide_error_buffer_allocation_too_large', 'number', ['number', 'number', 'number', 'number']);
     let custom_halide_error_buffer_extents_too_large = Module.cwrap('custom_halide_error_buffer_extents_too_large', 'number', ['number', 'number', 'number', 'number']);
     let custom_halide_error_host_is_null = Module.cwrap('custom_halide_error_host_is_null', 'number', ['number', 'number']);
+    let custom_halide_error_out_of_memory = Module.cwrap('custom_halide_error_out_of_memory', 'number', ['number']);
+    let custom_halide_free = Module.cwrap('custom_halide_free', null, ['number', 'number']);
 
     let get_halide_buffer_data = Module.cwrap('get_halide_buffer_data', 'number', ['number']);
 
@@ -25,6 +29,8 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
         env: {
             memory: Module.wasmMemory,
             halide_error_buffer_argument_is_null: custom_halide_error_buffer_argument_is_null,
+            halide_malloc: custom_halide_malloc,
+            memset: Module._memset,
             halide_error_bad_type: custom_halide_error_bad_type,
             halide_error_access_out_of_bounds: custom_halide_error_access_out_of_bounds,
             halide_error_bad_dimensions: custom_halide_error_bad_dimensions,
@@ -32,7 +38,9 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
             halide_error_constraint_violated: custom_halide_error_constraint_violated,
             halide_error_buffer_allocation_too_large: custom_halide_error_buffer_allocation_too_large,
             halide_error_buffer_extents_too_large: custom_halide_error_buffer_extents_too_large,
-            halide_error_host_is_null: custom_halide_error_host_is_null
+            halide_error_host_is_null: custom_halide_error_host_is_null,
+            halide_error_out_of_memory: custom_halide_error_out_of_memory,
+            halide_free: custom_halide_free
         }
     })
     .then(myFuncWasm => {
