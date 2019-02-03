@@ -179,8 +179,8 @@ var Module = { // Note: have to use var rather than let, for compatability with 
         let outHalideCtx = document.getElementById('canvas-image-out-halide').getContext('2d');
         let img = new Image();
         img.addEventListener('load', () => {
-            const width = 512;
-            const height = 512;
+            const width = 1024;
+            const height = 1024;
             let srcImageData = getImageData(img, width, height);
             let srcArray = getRedChannelUint8ClampedArray(srcImageData);
             console.log('srcArray:');
