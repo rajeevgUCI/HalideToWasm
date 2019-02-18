@@ -56,33 +56,13 @@ namespace
             }
         }
     }
-
-    void clamp(int32_t *input_array, int32_t input_width, int32_t input_height,
-                int32_t *output_array, int32_t min_value, int32_t max_value)
-    {
-        for(int32_t y = 0; y < input_height; ++y)
-        {
-            for(int32_t x = 0; x < input_width; ++x)
-            {
-                int32_t input_val = get_value(input_array, input_width, input_height, x, y, false);
-                int32_t val = input_val < min_value ? min_value : input_val;
-                val = val > max_value ? max_value : val;
-                set_value(output_array, input_width, input_height, x, y, val);
-            }
-        }
-    }
 }
 
 void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
                 int32_t *filter_array, int32_t filter_width, int32_t filter_height,
                 int32_t bias, int32_t *output_array)
 {
-    int32_t input_length = input_width * input_height;
-
-    int32_t *intermediate = new int32_t[input_length];
-    convolve(input_array, input_width, input_height, filter_array, filter_width, filter_height, bias, intermediate);
-    clamp(intermediate, input_width, input_height, output_array, 0, 255);
-    delete[] intermediate;
+    convolve(input_array, input_width, input_height, filter_array, filter_width, filter_height, bias, output_array);
 }
 
 }

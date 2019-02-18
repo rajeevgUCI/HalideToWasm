@@ -16,8 +16,7 @@ public:
         Var x("x"), y("y");
 
         Func f_conv_0("conv_0");
-        f_conv_0(x, y) = input(x, y);
-        f_conv_0 = BoundaryConditions::constant_exterior(f_conv_0, 0,
+        f_conv_0 = BoundaryConditions::constant_exterior(input, 0,
                     {{input.dim(0).min(), input.dim(0).extent()},
                     {input.dim(1).min(), input.dim(1).extent()}});
         f_conv_0.compute_root();
@@ -30,14 +29,10 @@ public:
         f_conv_1(x, y) += filter(r.x, r.y) * f_conv_0(x + r.x, y + r.y);
         f_conv_1.compute_root();
 
-        Func f_clamped("clamped");
-        f_clamped(x, y) = clamp(f_conv_1(x, y), 0, 255);
-        f_clamped.compute_root();
-
         // Prints debugging info at compile time:
-        f_clamped.print_loop_nest();
+        f_conv_1.print_loop_nest();
 
-        output(x, y) = f_clamped(x, y);
+        output(x, y) = f_conv_1(x, y);
    }
 };
 

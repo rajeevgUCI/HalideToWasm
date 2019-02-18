@@ -128,19 +128,8 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
             }
         }
     }
-    function clamp(inputTypedArray, outputTypedArray, minValue, maxValue) {
-        for(let y = 0; y < inputHeight; y++) {
-            for(let x = 0; x < inputWidth; x++) {
-                let inputVal = getValue(inputTypedArray, inputWidth, inputHeight, x, y, false);
-                let val = Math.min(Math.max(inputVal, minValue), maxValue);
-                setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
-            }
-        }
-    }
 
-    let intermediate = new Int32Array(inputTypedArray.length);
-    convolve(inputTypedArray, intermediate);
-    clamp(intermediate, outputTypedArray, 0, 255);
+    convolve(inputTypedArray, outputTypedArray);
 }
 
 function drawAndShowCanvas(canvasCtx, canvasId, loadingId, imageData) {
@@ -199,8 +188,6 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             myfunc_cpp(srcArrayHeapBytePtr, width, height, filterHeapPtr, filterWidth, filterHeight, biasInt, outArrayCppHeapBytePtr);
             console.timeEnd("myfunc_cpp");
             let outArrayCpp = Module.HEAP32.slice(outArrayCppHeapBytePtr / 4, outArrayCppHeapBytePtr / 4 + width * height);
-            // myfunc_cpp produces Int32Array with values between [0, 255], so
-            // Int32Array values can be directly copied to Uint8ClampedArray:
             outArrayCpp = new Uint8ClampedArray(outArrayCpp);
             // Values have been copied, so can free original:
             Module._free(outArrayCppHeapBytePtr);
@@ -218,8 +205,6 @@ var Module = { // Note: have to use var rather than let, for compatability with 
 
             halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasInt, halideBufOutputPtr, width, height, () => {
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
-                // myfunc produces Int32Array with values between [0, 255], so
-                // Int32Array values can be directly copied to Uint8ClampedArray:
                 outArray = new Uint8ClampedArray(outArray);
                 // Values have been copied, so can free original:
                 Module._free(outArrayHeapBytePtr);
