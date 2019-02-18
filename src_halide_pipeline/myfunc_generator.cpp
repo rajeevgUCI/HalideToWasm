@@ -19,7 +19,7 @@ public:
         f_conv_0 = BoundaryConditions::constant_exterior(input, 0,
                     {{input.dim(0).min(), input.dim(0).extent()},
                     {input.dim(1).min(), input.dim(1).extent()}});
-        f_conv_0.compute_root();
+        // f_conv_0.compute_root();
 
         RDom r(filter.dim(0).min(), filter.dim(0).extent(),
                filter.dim(1).min(), filter.dim(1).extent());
@@ -27,7 +27,7 @@ public:
         Func f_conv_1("conv_1");
         f_conv_1(x, y) = bias;
         f_conv_1(x, y) += filter(r.x, r.y) * f_conv_0(x + r.x, y + r.y);
-        f_conv_1.compute_root();
+        // f_conv_1.compute_root();
 
         // Prints debugging info at compile time:
         f_conv_1.print_loop_nest();
