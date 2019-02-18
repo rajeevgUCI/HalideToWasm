@@ -170,9 +170,15 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             drawAndShowCanvas(srcCtx, 'canvas-image-src', 'src-loading', srcImageData);
 
             srcArray = new Int32Array(srcArray); // convert from Uint8Clamped to Int32
-            let filterArray = new Int32Array([0, -1, 0, -1, 5, -1, 0, -1, 0]);
-            const filterWidth = 3;
-            const filterHeight = 3;
+            let filterArray = new Int32Array([-2, -1, 1, -1, -1, 1, -2,
+                                              -2, -1, 1, -1, -1, 1, -2,
+                                              -2, -1, 1, -1, -1, 1, -2,
+                                              -1, -1, 1, 60, -1, 1, -1,
+                                              -2, -1, 1, -1, -1, 1, -2,
+                                              -2, -1, 1, -1, -1, 1, -2,
+                                              -2, -1, 1, -1, -1, 1, -2]);
+            const filterWidth = 7;
+            const filterHeight = 7;
             let biasInt = 10;
 
             let outArrayJS = new Int32Array(srcArray.length);
