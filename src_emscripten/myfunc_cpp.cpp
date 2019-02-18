@@ -79,27 +79,10 @@ void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
 {
     int32_t input_length = input_width * input_height;
 
-    const int32_t NUM_CONVOLVES = 15;
-    int32_t *intermediate_1 = new int32_t[input_length];
-    for(int32_t i = 0; i < input_length; ++i)
-    {
-        intermediate_1[i] = input_array[i];
-    }
-    int32_t *intermediate_2 = new int32_t[input_length];
-    for(int32_t i = 0; i < NUM_CONVOLVES; ++i)
-    {
-        convolve(intermediate_1, input_width, input_height, filter_array, filter_width, filter_height, bias, intermediate_2);
-        delete[] intermediate_1;
-        intermediate_1 = intermediate_2;
-        intermediate_2 = new int32_t[input_length];
-    }
-    clamp(intermediate_1, input_width, input_height, intermediate_2, 0, 255);
-    for(int32_t i = 0; i < input_length; ++i)
-    {
-        output_array[i] = intermediate_2[i];
-    }
-    delete[] intermediate_1;
-    delete[] intermediate_2;
+    int32_t *intermediate = new int32_t[input_length];
+    convolve(input_array, input_width, input_height, filter_array, filter_width, filter_height, bias, intermediate);
+    clamp(intermediate, input_width, input_height, output_array, 0, 255);
+    delete[] intermediate;
 }
 
 }

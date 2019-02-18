@@ -1,14 +1,5 @@
 #include "Halide.h"
 
-#define conv_with_suffix(i, j) \
-    Func f_conv_##i("conv_"#i); \
-    f_conv_##i(x, y) = bias; \
-    f_conv_##i(x, y) += filter(r.x, r.y) * f_conv_##j(x + r.x, y + r.y); \
-    f_conv_##i = BoundaryConditions::constant_exterior(f_conv_##i, 0, \
-                    {{input.dim(0).min(), input.dim(0).extent()}, \
-                    {input.dim(1).min(), input.dim(1).extent()}}); \
-    f_conv_##i.compute_root();
-
 namespace {
 
 using namespace Halide;
@@ -34,25 +25,13 @@ public:
         RDom r(filter.dim(0).min(), filter.dim(0).extent(),
                filter.dim(1).min(), filter.dim(1).extent());
 
-        // Use macro to generate a pipeline of convolution operations:
-        conv_with_suffix(1, 0)
-        conv_with_suffix(2, 1)
-        conv_with_suffix(3, 2)
-        conv_with_suffix(4, 3)
-        conv_with_suffix(5, 4)
-        conv_with_suffix(6, 5)
-        conv_with_suffix(7, 6)
-        conv_with_suffix(8, 7)
-        conv_with_suffix(9, 8)
-        conv_with_suffix(10, 9)
-        conv_with_suffix(11, 10)
-        conv_with_suffix(12, 11)
-        conv_with_suffix(13, 12)
-        conv_with_suffix(14, 13)
-        conv_with_suffix(last, 14)
+        Func f_conv_1("conv_1");
+        f_conv_1(x, y) = bias;
+        f_conv_1(x, y) += filter(r.x, r.y) * f_conv_0(x + r.x, y + r.y);
+        f_conv_1.compute_root();
 
         Func f_clamped("clamped");
-        f_clamped(x, y) = clamp(f_conv_last(x, y), 0, 255);
+        f_clamped(x, y) = clamp(f_conv_1(x, y), 0, 255);
         f_clamped.compute_root();
 
         // Prints debugging info at compile time:

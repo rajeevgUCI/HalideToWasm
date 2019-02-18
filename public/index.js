@@ -138,16 +138,9 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
         }
     }
 
-    const NUM_CONVOLVES = 15;
-    let intermediate1 = inputTypedArray;
-    let intermediate2 = new Int32Array(inputTypedArray.length);
-    for(let i = 0; i < NUM_CONVOLVES; i++) {
-        convolve(intermediate1, intermediate2);
-        intermediate1 = intermediate2;
-        intermediate2 = new Int32Array(inputTypedArray.length);
-    }
-    clamp(intermediate1, intermediate2, 0, 255);
-    outputTypedArray.set(intermediate2);
+    let intermediate = new Int32Array(inputTypedArray.length);
+    convolve(inputTypedArray, intermediate);
+    clamp(intermediate, outputTypedArray, 0, 255);
 }
 
 function drawAndShowCanvas(canvasCtx, canvasId, loadingId, imageData) {
