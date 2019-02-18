@@ -1,9 +1,4 @@
 function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufOutput, width, height, doneCallback) {
-    Module.print("In JS");
-
-    Module.print(`halideBufInput address = 0x${halideBufInput.toString(16)}`);
-    Module.print(`halideBufOutput address = 0x${halideBufOutput.toString(16)}`);
-
     let custom_halide_error_buffer_argument_is_null = Module.cwrap('custom_halide_error_buffer_argument_is_null', 'number', ['number', 'number']);
     let custom_halide_malloc = Module.cwrap('custom_halide_malloc', null, ['number', 'number']);
     let memset = Module.cwrap('memset', 'number', ['number', 'number', 'number']);
@@ -21,9 +16,6 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
     let get_halide_buffer_data = Module.cwrap('get_halide_buffer_data', 'number', ['number']);
 
     let halideBufInputDataBytePtr = get_halide_buffer_data(halideBufInput);
-    Module.print(`halideBufInput data address = 0x${halideBufInputDataBytePtr.toString(16)}`);
-    Module.print('halideBufInput data in wasm memory:');
-    Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufInputDataBytePtr / 4, halideBufInputDataBytePtr / 4 + width * height));
 
     WebAssembly.instantiateStreaming(fetch('bin/myfunc.wasm'), {
         env: {
@@ -44,14 +36,10 @@ function halide_myfunc(Module, halideBufInput, filterBufPtr, biasInt, halideBufO
         }
     })
     .then(myFuncWasm => {
-        console.log('loaded wasm');
         console.time("myfuncHalide");
         let myFuncRetStatus = myFuncWasm.instance.exports.myfunc(halideBufInput, filterBufPtr, biasInt, halideBufOutput);
         console.timeEnd("myfuncHalide");
-        Module.print(`myFunc return status: ${myFuncRetStatus}`);
-        let halideBufOutputDataBytePtr = get_halide_buffer_data(halideBufOutput);
-        Module.print('halideBufOutput data in wasm memory:');
-        Module.print(new Int32Array(Module.wasmMemory.buffer).slice(halideBufOutputDataBytePtr / 4, halideBufOutputDataBytePtr / 4 + width * height));
+        // Module.print(`myFunc return status: ${myFuncRetStatus}`);
 
         doneCallback();
     });
@@ -185,8 +173,6 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             const height = 1024;
             let srcImageData = getImageData(img, width, height);
             let srcArray = getRedChannelUint8ClampedArray(srcImageData);
-            console.log('srcArray:');
-            console.log(srcArray);
             srcImageData = convertGrayscaleArrayToImageData(srcArray, width, height);
             drawAndShowCanvas(srcCtx, 'canvas-image-src', 'src-loading', srcImageData);
 
@@ -203,12 +189,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             console.timeEnd("myfuncJS");
             outArrayJS = new Uint8ClampedArray(outArrayJS);
             let outImageDataJS = convertGrayscaleArrayToImageData(outArrayJS, width, height);
-            console.log('outArrayJS:');
-            console.log(outArrayJS);
             drawAndShowCanvas(outJsCtx, 'canvas-image-out-js', 'out-js-loading', outImageDataJS);
 
             let srcArrayHeapBytePtr = copyTypedArrayToHeap(srcArray);
-            console.log(`srcArrayHeapBytePtr = 0x${srcArrayHeapBytePtr.toString(16)}`);
             let filterHeapPtr = copyTypedArrayToHeap(filterArray);
 
             let myfunc_cpp = Module.cwrap('myfunc_cpp', null, ['number', 'number', 'number', 'number', 'number', 'number', 'number', 'number']);
@@ -223,9 +206,9 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             // Values have been copied, so can free original:
             Module._free(outArrayCppHeapBytePtr);
             let outImageDataCpp = convertGrayscaleArrayToImageData(outArrayCpp, width, height);
-            console.log('outArrayCpp:');
-            console.log(outArrayCpp);
-            console.log(`all elements equal: ${outArrayCpp.every((v, i) => v == outArrayJS[i])}`);
+            if(outArrayCpp.some((v, i) => v != outArrayJS[i])) {
+                console.error("C++ not equal to JS");
+            }
             drawAndShowCanvas(outCppCtx, 'canvas-image-out-cpp', 'out-cpp-loading', outImageDataCpp);
 
             let create_halide_buffer = Module.cwrap('create_halide_buffer', 'number', ['number', 'number', 'number']);
@@ -234,9 +217,7 @@ var Module = { // Note: have to use var rather than let, for compatability with 
             let outArrayHeapBytePtr = Module._malloc(srcArray.byteLength);
             let halideBufOutputPtr = create_halide_buffer(outArrayHeapBytePtr, width, height);
 
-            console.log('Running Halide myfunc...');
             halide_myfunc(Module, halideBufInputPtr, filterBufPtr, biasInt, halideBufOutputPtr, width, height, () => {
-                console.log('Done running Halide myfunc.');
                 let outArray = Module.HEAP32.slice(outArrayHeapBytePtr / 4, outArrayHeapBytePtr / 4 + width * height);
                 // myfunc produces Int32Array with values between [0, 255], so
                 // Int32Array values can be directly copied to Uint8ClampedArray:
@@ -244,11 +225,11 @@ var Module = { // Note: have to use var rather than let, for compatability with 
                 // Values have been copied, so can free original:
                 Module._free(outArrayHeapBytePtr);
                 let outImageData = convertGrayscaleArrayToImageData(outArray, width, height);
-                console.log('outArray:');
-                console.log(outArray);
                 drawAndShowCanvas(outHalideCtx, 'canvas-image-out-halide', 'out-halide-loading', outImageData);
 
-                console.log(`all elements equal: ${outArray.every((v, i) => v == outArrayJS[i])}`);
+                if(outArray.some((v, i) => v != outArrayJS[i])) {
+                    console.error("Halide not equal to JS");
+                }
 
                 Module._free(srcArrayHeapBytePtr);
                 Module._free(filterHeapPtr);
