@@ -37,8 +37,6 @@ $(HALIDE_PIPELINE_WASM): $(HALIDE_PIPELINE_SRC)
 	@ # Note that compiles to module that imports memory:
 	$(LLVM_LIB)/build/bin/llc -march=wasm32 -filetype=obj $(HALIDE_PIPELINE_BC) -o $(HALIDE_PIPELINE_OBJ)
 	$(LLVM_LIB)/build/bin/wasm-ld $(HALIDE_PIPELINE_OBJ) --allow-undefined --no-entry --import-memory -o $(HALIDE_PIPELINE_WASM)
-	@ # For debugging, also output textual representation:
-	$(WABT_LIB)/bin/wasm2wast $(HALIDE_PIPELINE_WASM) -o $(HALIDE_PIPELINE_WAST)
 
 .PHONY: clean
 clean:
