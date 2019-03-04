@@ -92,44 +92,21 @@ function copyTypedArrayToHeap(typedArray) {
 function myfuncJS(inputTypedArray, inputWidth, inputHeight,
                     filterTypedArray, filterWidth, filterHeight,
                     biasInt, outputTypedArray) {
-    function getIndex(array, width, height, x, y) {
-        return width * y + x;
-    }
-    function getValue(array, width, height, x, y, isPadded) {
-        let idx = getIndex(array, width, height, x, y);
-        if(x < 0 || x >= width || y < 0 || y >= height) {
-            if(isPadded) {
-                return 0; // zero-padded
-            }
-            else {
-                throw new Error("getValue: index out of bounds and not padded");
-            }
-        }
-        // else if not isPadded, will return undefined when index out of bounds:
-        return array[idx];
-    }
-    function setValue(array, width, height, x, y, value) {
-        array[getIndex(array, width, height, x, y)] = value;
-    }
-    function convolve(inputTypedArray, outputTypedArray) {
-        for(let y = 0; y < inputHeight; y++) {
-            for(let x = 0; x < inputWidth; x++) {
-                let val = biasInt;
-                for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
-                    for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
-                        let filterVal = getValue(filterTypedArray, filterWidth, filterHeight,
-                                                    rDomX, rDomY, false);
-                        let inputVal = getValue(inputTypedArray, inputWidth, inputHeight,
-                                                x + rDomX, y + rDomY, true);
-                        val += filterVal * inputVal;
-                    }
+    for(let y = 0; y < inputHeight; y++) {
+        for(let x = 0; x < inputWidth; x++) {
+            let val = biasInt;
+            for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
+                for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
+                    let filterVal = filterTypedArray[filterWidth * rDomY + rDomX];
+                    let currInputX = x + rDomX;
+                    let currInputY = y + rDomY;
+                    let inputVal = (currInputX < 0 || currInputX >= inputWidth || currInputY < 0 || currInputY >= inputHeight) ? 0 : inputTypedArray[inputWidth * currInputY + currInputX];
+                    val += filterVal * inputVal;
                 }
-                setValue(outputTypedArray, inputWidth, inputHeight, x, y, val);
             }
+            outputTypedArray[inputWidth * y + x] = val;
         }
     }
-
-    convolve(inputTypedArray, outputTypedArray);
 }
 
 function drawAndShowCanvas(canvasCtx, canvasId, loadingId, imageData) {
