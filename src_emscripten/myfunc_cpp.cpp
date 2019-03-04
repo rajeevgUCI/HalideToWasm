@@ -13,7 +13,14 @@ void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
     {
         for(int32_t x = 0; x < input_width; ++x)
         {
-            int32_t val = bias;
+            output_array[input_width * y + x] = bias;
+        }
+    }
+
+    for(int32_t y = 0; y < input_height; ++y)
+    {
+        for(int32_t x = 0; x < input_width; ++x)
+        {
             for(int32_t rdom_y = 0; rdom_y < filter_height; ++rdom_y)
             {
                 for(int32_t rdom_x = 0; rdom_x < filter_width; ++rdom_x)
@@ -22,10 +29,9 @@ void myfunc_cpp(int32_t *input_array, int32_t input_width, int32_t input_height,
                     int32_t curr_input_x = x + rdom_x;
                     int32_t curr_input_y = y + rdom_y;
                     int32_t input_val = (curr_input_x < 0 || curr_input_x >= input_width || curr_input_y < 0 || curr_input_y >= input_height) ? 0 : input_array[input_width * curr_input_y + curr_input_x];
-                    val += filter_val * input_val;
+                    output_array[input_width * y + x] += filter_val * input_val;
                 }
             }
-            output_array[input_width * y + x] = val;
         }
     }
 }

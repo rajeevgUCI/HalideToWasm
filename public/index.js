@@ -94,17 +94,20 @@ function myfuncJS(inputTypedArray, inputWidth, inputHeight,
                     biasInt, outputTypedArray) {
     for(let y = 0; y < inputHeight; y++) {
         for(let x = 0; x < inputWidth; x++) {
-            let val = biasInt;
+            outputTypedArray[inputWidth * y + x] = biasInt;
+        }
+    }
+    for(let y = 0; y < inputHeight; y++) {
+        for(let x = 0; x < inputWidth; x++) {
             for(let rDomY = 0; rDomY < filterHeight; rDomY++) {
                 for(let rDomX = 0; rDomX < filterWidth; rDomX++) {
                     let filterVal = filterTypedArray[filterWidth * rDomY + rDomX];
                     let currInputX = x + rDomX;
                     let currInputY = y + rDomY;
                     let inputVal = (currInputX < 0 || currInputX >= inputWidth || currInputY < 0 || currInputY >= inputHeight) ? 0 : inputTypedArray[inputWidth * currInputY + currInputX];
-                    val += filterVal * inputVal;
+                    outputTypedArray[inputWidth * y + x] += filterVal * inputVal;
                 }
             }
-            outputTypedArray[inputWidth * y + x] = val;
         }
     }
 }
